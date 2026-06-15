@@ -2,19 +2,19 @@
 //  ContentView.swift
 //  MuseumMate
 //
-//  The five-tab main shell. Gallery-appropriate symbols, gold tint,
-//  a flat tab bar that melts into the gallery wall.
+//  The five-tab main shell: Dashboard, Scan, Collection, Memories, Profile.
+//  Gallery-appropriate symbols, gold tint, a flat tab bar.
 //
 
 import SwiftUI
 import UIKit
 
-struct ContentView: View {
-    enum Tab: Hashable {
-        case explore, scan, history, favorites, profile
-    }
+enum AppTab: Hashable {
+    case dashboard, scan, collection, memories, profile
+}
 
-    @State private var selection: Tab = .scan
+struct ContentView: View {
+    @State private var selection: AppTab = .dashboard
 
     init() {
         configureTabBarAppearance()
@@ -22,29 +22,29 @@ struct ContentView: View {
 
     var body: some View {
         TabView(selection: $selection) {
-            ExploreView()
-                .tabItem { Label("Explore", systemImage: "camera.aperture") }
-                .tag(Tab.explore)
+            DashboardView(selectedTab: $selection)
+                .tabItem { Label("Dashboard", systemImage: "square.grid.2x2") }
+                .tag(AppTab.dashboard)
 
             ScanView()
                 .tabItem { Label("Scan", systemImage: "viewfinder.circle") }
-                .tag(Tab.scan)
+                .tag(AppTab.scan)
 
-            HistoryView()
-                .tabItem { Label("History", systemImage: "clock.arrow.circlepath") }
-                .tag(Tab.history)
+            CollectionView(selectedTab: $selection)
+                .tabItem { Label("Collection", systemImage: "rectangle.stack") }
+                .tag(AppTab.collection)
 
-            FavoritesView()
-                .tabItem { Label("Favorites", systemImage: "heart") }
-                .tag(Tab.favorites)
+            MemoriesView()
+                .tabItem { Label("Memories", systemImage: "photo.on.rectangle.angled") }
+                .tag(AppTab.memories)
 
             ProfileView()
                 .tabItem { Label("Profile", systemImage: "person.crop.circle") }
-                .tag(Tab.profile)
+                .tag(AppTab.profile)
         }
         .tint(Color.appAccent)
         .onChange(of: selection) { _ in
-            Haptics.tap()
+            Haptics.impact(.light)
         }
     }
 
@@ -75,6 +75,7 @@ struct ContentView_Previews: PreviewProvider {
             .environmentObject(UserProfile())
             .environmentObject(ScanHistoryStore())
             .environmentObject(FavoritesStore())
+            .environmentObject(MemoriesStore())
             .preferredColorScheme(.dark)
     }
 }

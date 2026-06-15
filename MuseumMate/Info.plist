@@ -26,6 +26,10 @@
 	<string>MuseumMate uses the camera to recognize artworks in real time and to scan a painting for identification.</string>
 	<key>NSPhotoLibraryUsageDescription</key>
 	<string>MuseumMate accesses your photo library so you can identify artworks from your saved photos.</string>
+	<key>NSPhotoLibraryAddUsageDescription</key>
+	<string>MuseumMate saves museum memory photos you capture so you can revisit them later.</string>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>MuseumMate uses your location to show museums near you on the dashboard.</string>
 	<key>UIApplicationSceneManifest</key>
 	<dict>
 		<key>UIApplicationSupportsMultipleScenes</key>

@@ -43,6 +43,23 @@
 		0FF2001B0000000000000000 /* EmptyStateView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0FF1001B0000000000000000 /* EmptyStateView.swift */; };
 		0FF2001C0000000000000000 /* LoadingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0FF1001C0000000000000000 /* LoadingView.swift */; };
 		0FF2001D0000000000000000 /* ScanThumbnail.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0FF1001D0000000000000000 /* ScanThumbnail.swift */; };
+		0FF200410000000000000000 /* MetObject.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0FF100410000000000000000 /* MetObject.swift */; };
+		0FF200420000000000000000 /* TriviaQuestion.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0FF100420000000000000000 /* TriviaQuestion.swift */; };
+		0FF200430000000000000000 /* ArtHistoryEvent.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0FF100430000000000000000 /* ArtHistoryEvent.swift */; };
+		0FF200440000000000000000 /* Museum.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0FF100440000000000000000 /* Museum.swift */; };
+		0FF200450000000000000000 /* MemoryPhoto.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0FF100450000000000000000 /* MemoryPhoto.swift */; };
+		0FF200460000000000000000 /* DashboardViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0FF100460000000000000000 /* DashboardViewModel.swift */; };
+		0FF200470000000000000000 /* MemoriesViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0FF100470000000000000000 /* MemoriesViewModel.swift */; };
+		0FF200480000000000000000 /* MetMuseumService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0FF100480000000000000000 /* MetMuseumService.swift */; };
+		0FF200490000000000000000 /* LocationService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0FF100490000000000000000 /* LocationService.swift */; };
+		0FF2004A0000000000000000 /* MemoriesStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0FF1004A0000000000000000 /* MemoriesStore.swift */; };
+		0FF2004B0000000000000000 /* SkeletonView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0FF1004B0000000000000000 /* SkeletonView.swift */; };
+		0FF2004C0000000000000000 /* DashboardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0FF1004C0000000000000000 /* DashboardView.swift */; };
+		0FF2004D0000000000000000 /* DailyPaintingSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0FF1004D0000000000000000 /* DailyPaintingSheet.swift */; };
+		0FF2004E0000000000000000 /* MuseumDetailSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0FF1004E0000000000000000 /* MuseumDetailSheet.swift */; };
+		0FF2004F0000000000000000 /* CollectionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0FF1004F0000000000000000 /* CollectionView.swift */; };
+		0FF200500000000000000000 /* MemoriesView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0FF100500000000000000000 /* MemoriesView.swift */; };
+		0FF200510000000000000000 /* MemoryDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0FF100510000000000000000 /* MemoryDetailView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -85,6 +102,23 @@
 		0FF1001B0000000000000000 /* EmptyStateView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EmptyStateView.swift; sourceTree = "<group>"; };
 		0FF1001C0000000000000000 /* LoadingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LoadingView.swift; sourceTree = "<group>"; };
 		0FF1001D0000000000000000 /* ScanThumbnail.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScanThumbnail.swift; sourceTree = "<group>"; };
+		0FF100410000000000000000 /* MetObject.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MetObject.swift; sourceTree = "<group>"; };
+		0FF100420000000000000000 /* TriviaQuestion.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TriviaQuestion.swift; sourceTree = "<group>"; };
+		0FF100430000000000000000 /* ArtHistoryEvent.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ArtHistoryEvent.swift; sourceTree = "<group>"; };
+		0FF100440000000000000000 /* Museum.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Museum.swift; sourceTree = "<group>"; };
+		0FF100450000000000000000 /* MemoryPhoto.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MemoryPhoto.swift; sourceTree = "<group>"; };
+		0FF100460000000000000000 /* DashboardViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DashboardViewModel.swift; sourceTree = "<group>"; };
+		0FF100470000000000000000 /* MemoriesViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MemoriesViewModel.swift; sourceTree = "<group>"; };
+		0FF100480000000000000000 /* MetMuseumService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MetMuseumService.swift; sourceTree = "<group>"; };
+		0FF100490000000000000000 /* LocationService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocationService.swift; sourceTree = "<group>"; };
+		0FF1004A0000000000000000 /* MemoriesStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MemoriesStore.swift; sourceTree = "<group>"; };
+		0FF1004B0000000000000000 /* SkeletonView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SkeletonView.swift; sourceTree = "<group>"; };
+		0FF1004C0000000000000000 /* DashboardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DashboardView.swift; sourceTree = "<group>"; };
+		0FF1004D0000000000000000 /* DailyPaintingSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DailyPaintingSheet.swift; sourceTree = "<group>"; };
+		0FF1004E0000000000000000 /* MuseumDetailSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MuseumDetailSheet.swift; sourceTree = "<group>"; };
+		0FF1004F0000000000000000 /* CollectionView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CollectionView.swift; sourceTree = "<group>"; };
+		0FF100500000000000000000 /* MemoriesView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MemoriesView.swift; sourceTree = "<group>"; };
+		0FF100510000000000000000 /* MemoryDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MemoryDetailView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -144,6 +178,11 @@
 		0F27721B2FDA5B0000DEF486 /* Models */ = {
 			isa = PBXGroup;
 			children = (
+				0FF100410000000000000000 /* MetObject.swift */,
+				0FF100420000000000000000 /* TriviaQuestion.swift */,
+				0FF100430000000000000000 /* ArtHistoryEvent.swift */,
+				0FF100440000000000000000 /* Museum.swift */,
+				0FF100450000000000000000 /* MemoryPhoto.swift */,
 				0FF100010000000000000000 /* ArtStyle.swift */,
 				0FF100020000000000000000 /* Artwork.swift */,
 				0FF100030000000000000000 /* ScanResult.swift */,
@@ -155,6 +194,8 @@
 		0F27721C2FDA5B0000DEF486 /* ViewModels */ = {
 			isa = PBXGroup;
 			children = (
+				0FF100460000000000000000 /* DashboardViewModel.swift */,
+				0FF100470000000000000000 /* MemoriesViewModel.swift */,
 				0FF100050000000000000000 /* ExploreViewModel.swift */,
 				0FF100060000000000000000 /* ScanViewModel.swift */,
 			);
@@ -164,6 +205,9 @@
 		0F27721D2FDA5B0000DEF486 /* Services */ = {
 			isa = PBXGroup;
 			children = (
+				0FF100480000000000000000 /* MetMuseumService.swift */,
+				0FF100490000000000000000 /* LocationService.swift */,
+				0FF1004A0000000000000000 /* MemoriesStore.swift */,
 				0FF100070000000000000000 /* AppConfig.swift */,
 				0FF100080000000000000000 /* ArtStyleClassifierService.swift */,
 				0FF100090000000000000000 /* AuthService.swift */,
@@ -179,6 +223,9 @@
 		0F27721E2FDA5B0000DEF486 /* Views */ = {
 			isa = PBXGroup;
 			children = (
+				0FF1FF0100000000000000DA /* Dashboard */,
+				0FF1FF0200000000000000DA /* Collection */,
+				0FF1FF0300000000000000DA /* Memories */,
 				0F27721F2FDA5B0000DEF486 /* Explore */,
 				0F2772202FDA5B0000DEF486 /* Scan */,
 				0F2772212FDA5B0000DEF486 /* History */,
@@ -255,6 +302,7 @@
 		0F2772262FDA5B0000DEF486 /* Shared */ = {
 			isa = PBXGroup;
 			children = (
+				0FF1004B0000000000000000 /* SkeletonView.swift */,
 				0FF1001B0000000000000000 /* EmptyStateView.swift */,
 				0FF1001C0000000000000000 /* LoadingView.swift */,
 				0FF1001D0000000000000000 /* ScanThumbnail.swift */,
@@ -277,6 +325,33 @@
 				0F2772132FDA5B0000DEF486 /* PrivacyInfo.xcprivacy */,
 			);
 			path = Resources;
+			sourceTree = "<group>";
+		};
+		0FF1FF0100000000000000DA /* Dashboard */ = {
+			isa = PBXGroup;
+			children = (
+				0FF1004C0000000000000000 /* DashboardView.swift */,
+				0FF1004D0000000000000000 /* DailyPaintingSheet.swift */,
+				0FF1004E0000000000000000 /* MuseumDetailSheet.swift */,
+			);
+			path = Dashboard;
+			sourceTree = "<group>";
+		};
+		0FF1FF0200000000000000DA /* Collection */ = {
+			isa = PBXGroup;
+			children = (
+				0FF1004F0000000000000000 /* CollectionView.swift */,
+			);
+			path = Collection;
+			sourceTree = "<group>";
+		};
+		0FF1FF0300000000000000DA /* Memories */ = {
+			isa = PBXGroup;
+			children = (
+				0FF100500000000000000000 /* MemoriesView.swift */,
+				0FF100510000000000000000 /* MemoryDetailView.swift */,
+			);
+			path = Memories;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -358,6 +433,23 @@
 				0F2772142FDA5B0000DEF486 /* Color+Theme.swift in Sources */,
 				0F2772152FDA5B0000DEF486 /* View+Extensions.swift in Sources */,
 				0F2772012FDA58C400DEF486 /* MuseumMateApp.swift in Sources */,
+				0FF200410000000000000000 /* MetObject.swift in Sources */,
+				0FF200420000000000000000 /* TriviaQuestion.swift in Sources */,
+				0FF200430000000000000000 /* ArtHistoryEvent.swift in Sources */,
+				0FF200440000000000000000 /* Museum.swift in Sources */,
+				0FF200450000000000000000 /* MemoryPhoto.swift in Sources */,
+				0FF200460000000000000000 /* DashboardViewModel.swift in Sources */,
+				0FF200470000000000000000 /* MemoriesViewModel.swift in Sources */,
+				0FF200480000000000000000 /* MetMuseumService.swift in Sources */,
+				0FF200490000000000000000 /* LocationService.swift in Sources */,
+				0FF2004A0000000000000000 /* MemoriesStore.swift in Sources */,
+				0FF2004B0000000000000000 /* SkeletonView.swift in Sources */,
+				0FF2004C0000000000000000 /* DashboardView.swift in Sources */,
+				0FF2004D0000000000000000 /* DailyPaintingSheet.swift in Sources */,
+				0FF2004E0000000000000000 /* MuseumDetailSheet.swift in Sources */,
+				0FF2004F0000000000000000 /* CollectionView.swift in Sources */,
+				0FF200500000000000000000 /* MemoriesView.swift in Sources */,
+				0FF200510000000000000000 /* MemoryDetailView.swift in Sources */,
 				0FF200010000000000000000 /* ArtStyle.swift in Sources */,
 				0FF200020000000000000000 /* Artwork.swift in Sources */,
 				0FF200030000000000000000 /* ScanResult.swift in Sources */,

@@ -13,6 +13,7 @@ struct MuseumMateApp: App {
     @StateObject private var profile = UserProfile()
     @StateObject private var historyStore = ScanHistoryStore()
     @StateObject private var favoritesStore = FavoritesStore()
+    @StateObject private var memoriesStore = MemoriesStore()
 
     var body: some Scene {
         WindowGroup {
@@ -21,6 +22,7 @@ struct MuseumMateApp: App {
                 .environmentObject(profile)
                 .environmentObject(historyStore)
                 .environmentObject(favoritesStore)
+                .environmentObject(memoriesStore)
                 .preferredColorScheme(.dark)   // museum theme is dark-only
                 .task {
                     historyStore.attach(profile: profile)

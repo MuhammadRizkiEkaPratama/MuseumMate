@@ -168,3 +168,80 @@ Notes       : ProfileView: serif initial avatar, scans/favorites/styles
               messages into typed [[String: Any]] locals; BUILD SUCCEEDED,
               warning-clean. All 29 new Swift files wired into the project.
 ```
+
+---
+
+> **Phase 7 — New Features (no Firebase).** Tab bar restructured to
+> Dashboard · Scan · Collection · Memories · Profile. The old Explore tab
+> was removed from the shell; ExploreView/HistoryView/FavoritesView files
+> remain in the project but are no longer referenced (safe to delete later).
+> Firebase still not installed — all backend remains stubbed (Phase 8).
+
+```
+Ticket #008
+Assigned to : vision-integration / ui-ux
+Phase       : Phase 7A
+Task        : Dashboard tab — Met daily painting, GPT quote + trivia, On This Day, nearby museums
+Status      : Completed
+Iterations  : 2
+Collaboration: Handed off to qa; Firebase deferred to Phase 8
+Notes       : MetMuseumService hits the public Met Collection API (no key):
+              deterministic daily highlight via a yyyyMMdd seed, 5-attempt
+              image validation, cached per day in UserDefaults. VisionService
+              gained text-only GPT-4o calls (generateArtworkQuote,
+              generateDailyTrivia → TriviaQuestion JSON, generateOnThisDay
+              Explanation) reusing the same endpoint/key; all responses
+              cached per day. ArtHistoryLibrary holds 73 curated events (≥5
+              per month); MuseumLibrary holds 30 museums with real coords +
+              CoreLocation sorting and a famous-museum fallback when denied.
+              DashboardViewModel parallelizes quote+trivia (async let), lazy-
+              loads On-This-Day explanations on expand, persists trivia answer
+              for the day. DashboardView: skeleton-loaded hero painting card →
+              detail sheet, AI quote block, interactive trivia with reveal,
+              On This Day expandable cards, horizontal museum cards → sheet,
+              time-aware greeting, and a Scan CTA that switches tabs via a
+              @Binding<AppTab>. Iter 2 fixed iOS-17 .topBarTrailing →
+              .navigationBarTrailing for Xcode 14.
+```
+
+```
+Ticket #009
+Assigned to : ui-ux
+Phase       : Phase 7B
+Task        : Collection tab merging History + Favorites
+Status      : Completed
+Iterations  : 1
+Collaboration: Handed off to qa
+Notes       : CollectionView replaces History/Favorites in the shell: two
+              stat pills, a custom sliding-gold-underline All/Favorites
+              switcher (museumSpring), live search over title/artist/style,
+              horizontal style filter chips, and a row list with leading-
+              swipe favorite toggle and trailing-swipe delete (confirmation,
+              removes image + thumbnail via ImageStore). Distinct empty
+              states for no scans (with Start-Scanning tab switch), no
+              favorites, and no search results.
+```
+
+```
+Ticket #010
+Assigned to : ui-ux / vision-integration
+Phase       : Phase 7C
+Task        : Museum Memories tab with auto-link to scans
+Status      : Completed
+Iterations  : 1
+Collaboration: Handed back to user for Xcode testing before Phase 8 (Firebase)
+Notes       : MemoryPhoto model + MemoriesStore (UserDefaults, key
+              museummate_memories_v1, deletes image on remove). MemoriesView:
+              3-column square grid (2pt gaps), link badge on linked photos,
+              long-press context menu (Edit Caption / Link to Artwork /
+              Delete), camera + library toolbar add. On add, MemoriesViewModel
+              auto-links to the nearest scan within ±2h and surfaces a
+              confirm/skip suggestion sheet (presentationDetents). Memory
+              DetailView: full-bleed photo, ultraThinMaterial bottom panel
+              with inline editable caption, linked-scan card → ArtworkDetail
+              View, link picker, and UIActivityViewController share. New
+              Info.plist keys added: NSLocationWhenInUseUsageDescription and
+              NSPhotoLibraryAddUsageDescription. Verified BUILD SUCCEEDED,
+              warning-clean, Xcode 14.3.1 / iOS 16.4 simulator. 17 new Swift
+              files + 3 new view groups wired into the project.
+```

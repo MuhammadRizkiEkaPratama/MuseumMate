@@ -158,6 +158,119 @@ final class VisionService {
     }
 }
 
+// MARK: - Text-only daily content (Dashboard)
+
+extension VisionService {
+    /// One contemplative quote inspired by the daily painting.
+    func generateArtworkQuote(painting: MetObject) async throws -> String {
+        let prompt = """
+        You are a poet and art philosopher. Write ONE beautiful, contemplative quote \
+        (max 35 words) inspired by '\(painting.title)' by \(painting.artistOrUnknown). \
+        The quote should evoke the mood and feeling of the work without describing it \
+        literally. Return only the quote text, no quotation marks, no attribution.
+        """
+        let text = try await completeText(system: nil, user: prompt, maxTokens: 80, temperature: 0.9)
+        return text.trimmingCharacters(in: CharacterSet(charactersIn: "\"'\n "))
+    }
+
+    /// A moderate-difficulty multiple-choice question about the painting.
+    func generateDailyTrivia(painting: MetObject) async throws -> TriviaQuestion {
+        let prompt = """
+        Create one multiple-choice trivia question about the artwork '\(painting.title)' \
+        by \(painting.artistOrUnknown) (\(painting.objectDate)). Return ONLY valid JSON, no markdown:
+        {
+          "question": "...",
+          "options": ["A", "B", "C", "D"],
+          "correctIndex": 0,
+          "explanation": "Brief explanation of the correct answer (1-2 sentences)."
+        }
+        Make it genuinely interesting and educational. Difficulty: moderate.
+        """
+        let text = try await completeText(system: nil, user: prompt, maxTokens: 300, temperature: 0.7)
+        return try decodeTrivia(from: text)
+    }
+
+    /// Why an art-history event mattered, in 2–3 sentences.
+    func generateOnThisDayExplanation(event: ArtHistoryEvent) async throws -> String {
+        let prompt = """
+        In 2-3 sentences, explain why '\(event.title)' on \(event.dateDescription) was \
+        significant in art history. Write as if for an intelligent general audience \
+        visiting a museum. Be specific and engaging.
+        """
+        return try await completeText(system: nil, user: prompt, maxTokens: 150, temperature: 0.7)
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+    }
+
+    // MARK: - Shared text completion
+
+    private func completeText(system: String?, user: String, maxTokens: Int, temperature: Double) async throws -> String {
+        guard AppConfig.hasValidAPIKey else { throw VisionError.missingAPIKey }
+        guard let url = URL(string: "https://api.openai.com/v1/chat/completions") else {
+            throw VisionError.invalidURL
+        }
+
+        var messages: [[String: Any]] = []
+        if let system { messages.append(["role": "system", "content": system]) }
+        messages.append(["role": "user", "content": user])
+
+        let body: [String: Any] = [
+            "model": "gpt-4o",
+            "max_tokens": maxTokens,
+            "temperature": temperature,
+            "messages": messages
+        ]
+
+        var request = URLRequest(url: url)
+        request.httpMethod = "POST"
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        request.setValue("Bearer \(AppConfig.openAIAPIKey)", forHTTPHeaderField: "Authorization")
+        request.timeoutInterval = 60
+        request.httpBody = try? JSONSerialization.data(withJSONObject: body)
+
+        let (data, response): (Data, URLResponse)
+        do {
+            (data, response) = try await URLSession.shared.data(for: request)
+        } catch {
+            throw VisionError.network(error.localizedDescription)
+        }
+        guard let http = response as? HTTPURLResponse else { throw VisionError.invalidResponse }
+        guard (200...299).contains(http.statusCode) else {
+            if http.statusCode == 429 { throw VisionError.rateLimited }
+            throw VisionError.httpError(http.statusCode, "")
+        }
+
+        guard
+            let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+            let choices = json["choices"] as? [[String: Any]],
+            let message = choices.first?["message"] as? [String: Any],
+            let content = message["content"] as? String
+        else { throw VisionError.emptyResponse }
+
+        let trimmed = content.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else { throw VisionError.emptyResponse }
+        return trimmed
+    }
+
+    private func decodeTrivia(from content: String) throws -> TriviaQuestion {
+        let cleaned = stripMarkdown(content)
+        let decoder = JSONDecoder()
+        if let data = cleaned.data(using: .utf8),
+           let trivia = try? decoder.decode(TriviaQuestion.self, from: data) {
+            return trivia
+        }
+        if let start = cleaned.firstIndex(of: "{"),
+           let end = cleaned.lastIndex(of: "}"),
+           start < end {
+            let slice = String(cleaned[start...end])
+            if let data = slice.data(using: .utf8),
+               let trivia = try? decoder.decode(TriviaQuestion.self, from: data) {
+                return trivia
+            }
+        }
+        throw VisionError.decodingFailed
+    }
+}
+
 // MARK: - Errors
 
 enum VisionError: LocalizedError {
