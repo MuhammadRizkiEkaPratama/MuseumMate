@@ -57,15 +57,20 @@ struct FadeSlideIn: ViewModifier {
 
 // MARK: - Haptics
 
-/// Light haptic feedback for key actions (scan, favorite, capture).
+/// Haptic feedback for key actions (tab change, scan, favorite, capture).
 enum Haptics {
-    static func tap() {
-        UIImpactFeedbackGenerator(style: .light).impactOccurred()
+    static func impact(_ style: UIImpactFeedbackGenerator.FeedbackStyle = .light) {
+        UIImpactFeedbackGenerator(style: style).impactOccurred()
     }
 
-    static func success() {
-        UINotificationFeedbackGenerator().notificationOccurred(.success)
+    static func notification(_ type: UINotificationFeedbackGenerator.FeedbackType) {
+        UINotificationFeedbackGenerator().notificationOccurred(type)
     }
+
+    // Convenience shorthands used across the app.
+    static func tap() { impact(.light) }
+    static func success() { notification(.success) }
+    static func error() { notification(.error) }
 }
 
 // MARK: - View helpers

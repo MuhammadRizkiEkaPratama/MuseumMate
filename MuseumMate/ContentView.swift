@@ -2,39 +2,79 @@
 //  ContentView.swift
 //  MuseumMate
 //
-//  Phase 0 placeholder — replaced by the five-tab shell in Phase 1.
+//  The five-tab main shell. Gallery-appropriate symbols, gold tint,
+//  a flat tab bar that melts into the gallery wall.
 //
 
 import SwiftUI
+import UIKit
 
 struct ContentView: View {
+    enum Tab: Hashable {
+        case explore, scan, history, favorites, profile
+    }
+
+    @State private var selection: Tab = .scan
+
+    init() {
+        configureTabBarAppearance()
+    }
+
     var body: some View {
-        ZStack {
-            Color.appBackground
-                .ignoresSafeArea()
+        TabView(selection: $selection) {
+            ExploreView()
+                .tabItem { Label("Explore", systemImage: "camera.aperture") }
+                .tag(Tab.explore)
 
-            VStack(spacing: 16) {
-                Text("MuseumMate")
-                    .font(.system(.largeTitle, design: .serif))
-                    .foregroundStyle(Color.appTextPrimary)
-                    .fadeSlideIn()
+            ScanView()
+                .tabItem { Label("Scan", systemImage: "viewfinder.circle") }
+                .tag(Tab.scan)
 
-                Rectangle()
-                    .fill(Color.appAccent)
-                    .frame(width: 44, height: 2)
-                    .fadeSlideIn(delay: 0.12)
+            HistoryView()
+                .tabItem { Label("History", systemImage: "clock.arrow.circlepath") }
+                .tag(Tab.history)
 
-                Text("Every artwork has a story")
-                    .font(.subheadline)
-                    .foregroundStyle(Color.appTextSecondary)
-                    .fadeSlideIn(delay: 0.24)
-            }
+            FavoritesView()
+                .tabItem { Label("Favorites", systemImage: "heart") }
+                .tag(Tab.favorites)
+
+            ProfileView()
+                .tabItem { Label("Profile", systemImage: "person.crop.circle") }
+                .tag(Tab.profile)
         }
+        .tint(Color.appAccent)
+        .onChange(of: selection) { _ in
+            Haptics.tap()
+        }
+    }
+
+    private func configureTabBarAppearance() {
+        let appearance = UITabBarAppearance()
+        appearance.configureWithOpaqueBackground()
+        appearance.backgroundColor = UIColor(Color.appBackground)
+        appearance.shadowColor = .clear   // no separator line
+
+        let itemAppearance = UITabBarItemAppearance()
+        itemAppearance.selected.iconColor = UIColor(Color.appAccent)
+        itemAppearance.selected.titleTextAttributes = [.foregroundColor: UIColor(Color.appAccent)]
+        itemAppearance.normal.iconColor = UIColor(Color.appTextMuted)
+        itemAppearance.normal.titleTextAttributes = [.foregroundColor: UIColor(Color.appTextMuted)]
+        appearance.stackedLayoutAppearance = itemAppearance
+        appearance.inlineLayoutAppearance = itemAppearance
+        appearance.compactInlineLayoutAppearance = itemAppearance
+
+        UITabBar.appearance().standardAppearance = appearance
+        UITabBar.appearance().scrollEdgeAppearance = appearance
     }
 }
 
 struct ContentView_Previews: PreviewProvider {
     static var previews: some View {
         ContentView()
+            .environmentObject(AuthService())
+            .environmentObject(UserProfile())
+            .environmentObject(ScanHistoryStore())
+            .environmentObject(FavoritesStore())
+            .preferredColorScheme(.dark)
     }
 }
