@@ -1,0 +1,15 @@
+# macOS
+.DS_Store
+
+# Xcode user state
+xcuserdata/
+*.xcuserstate
+DerivedData/
+build/
+.swiftpm/
+
+# Secrets — add these locally, never commit
+GoogleService-Info.plist
+Secrets.plist
+Secrets.xcconfig
+.env
