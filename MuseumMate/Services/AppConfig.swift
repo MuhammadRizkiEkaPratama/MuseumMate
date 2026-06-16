@@ -3,26 +3,29 @@
 //  MuseumMate
 //
 //  Reads secrets without committing them. Add a `Secrets.plist` to the
-//  app target (it is gitignored) with a string key `OpenAIAPIKey`, or set
+//  app target (it is gitignored) with a string key `DeepSeekAPIKey`, or set
 //  the same key in Info.plist for local testing. Never hardcode the key.
+//
+//  Get your key at platform.deepseek.com/api_keys
+//  New accounts receive free credits for testing
 //
 
 import Foundation
 
 enum AppConfig {
     /// Clearly-marked placeholder so the app builds before a key is added.
-    static let apiKeyPlaceholder = "YOUR_OPENAI_API_KEY"
+    static let apiKeyPlaceholder = "YOUR_DEEPSEEK_API_KEY"
 
-    /// The OpenAI API key, resolved at runtime from Secrets.plist or Info.plist.
-    static var openAIAPIKey: String {
-        if let key = value(forKey: "OpenAIAPIKey"), !key.isEmpty {
+    /// The DeepSeek API key, resolved at runtime from Secrets.plist or Info.plist.
+    static var deepSeekAPIKey: String {
+        if let key = value(forKey: "DeepSeekAPIKey"), !key.isEmpty {
             return key
         }
         return apiKeyPlaceholder
     }
 
     static var hasValidAPIKey: Bool {
-        let key = openAIAPIKey
+        let key = deepSeekAPIKey
         return !key.isEmpty && key != apiKeyPlaceholder
     }
 

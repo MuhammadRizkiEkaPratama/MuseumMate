@@ -2,18 +2,27 @@
 //  VisionService.swift
 //  MuseumMate
 //
-//  Cloud path: GPT-4o Vision identifies the artwork and returns strict
-//  JSON matching the Artwork CodingKeys. Robust against markdown fences
-//  and chatty wrappers.
+//  Cloud path: DeepSeek V4 Pro Vision identifies the artwork and returns
+//  strict JSON matching the Artwork CodingKeys. Robust against markdown
+//  fences and chatty wrappers.
+//
+// Vision provider : DeepSeek V4 Pro
+// Platform        : platform.deepseek.com
+// Docs            : api-docs.deepseek.com
+// Model           : deepseek-v4-pro
+//                   (flagship reasoning model — highest accuracy
+//                    for art identification and explanation)
+// Pricing         : ~$2.18/1M input, $8.72/1M output
+//                   (still cheaper than GPT-4o at scale)
 //
 
 import UIKit
 
 final class VisionService {
-    private let endpoint = "https://api.openai.com/v1/chat/completions"
-    private let model = "gpt-4o"
+    private let endpoint = "https://api.deepseek.com/chat/completions"
+    private let model = "deepseek-v4-pro"
 
-    private var apiKey: String { AppConfig.openAIAPIKey }
+    private var apiKey: String { AppConfig.deepSeekAPIKey }
 
     private let systemPrompt = """
     You are an expert art historian. Identify the artwork in the image. Respond ONLY with \
@@ -142,7 +151,7 @@ final class VisionService {
         throw VisionError.decodingFailed
     }
 
-    /// Drops ```json / ``` fences GPT sometimes wraps JSON in.
+    /// Drops ```json / ``` fences the model sometimes wraps JSON in.
     private func stripMarkdown(_ string: String) -> String {
         var text = string.trimmingCharacters(in: .whitespacesAndNewlines)
         if text.hasPrefix("```") {
@@ -169,6 +178,8 @@ extension VisionService {
         The quote should evoke the mood and feeling of the work without describing it \
         literally. Return only the quote text, no quotation marks, no attribution.
         """
+        // DeepSeek V4 Pro — text generation
+        // No image payload for this call
         let text = try await completeText(system: nil, user: prompt, maxTokens: 80, temperature: 0.9)
         return text.trimmingCharacters(in: CharacterSet(charactersIn: "\"'\n "))
     }
@@ -186,6 +197,8 @@ extension VisionService {
         }
         Make it genuinely interesting and educational. Difficulty: moderate.
         """
+        // DeepSeek V4 Pro — text generation
+        // No image payload for this call
         let text = try await completeText(system: nil, user: prompt, maxTokens: 300, temperature: 0.7)
         return try decodeTrivia(from: text)
     }
@@ -197,6 +210,8 @@ extension VisionService {
         significant in art history. Write as if for an intelligent general audience \
         visiting a museum. Be specific and engaging.
         """
+        // DeepSeek V4 Pro — text generation
+        // No image payload for this call
         return try await completeText(system: nil, user: prompt, maxTokens: 150, temperature: 0.7)
             .trimmingCharacters(in: .whitespacesAndNewlines)
     }
@@ -205,7 +220,7 @@ extension VisionService {
 
     private func completeText(system: String?, user: String, maxTokens: Int, temperature: Double) async throws -> String {
         guard AppConfig.hasValidAPIKey else { throw VisionError.missingAPIKey }
-        guard let url = URL(string: "https://api.openai.com/v1/chat/completions") else {
+        guard let url = URL(string: "https://api.deepseek.com/chat/completions") else {
             throw VisionError.invalidURL
         }
 
@@ -214,7 +229,7 @@ extension VisionService {
         messages.append(["role": "user", "content": user])
 
         let body: [String: Any] = [
-            "model": "gpt-4o",
+            "model": "deepseek-v4-pro",
             "max_tokens": maxTokens,
             "temperature": temperature,
             "messages": messages
@@ -223,7 +238,7 @@ extension VisionService {
         var request = URLRequest(url: url)
         request.httpMethod = "POST"
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
-        request.setValue("Bearer \(AppConfig.openAIAPIKey)", forHTTPHeaderField: "Authorization")
+        request.setValue("Bearer \(AppConfig.deepSeekAPIKey)", forHTTPHeaderField: "Authorization")
         request.timeoutInterval = 60
         request.httpBody = try? JSONSerialization.data(withJSONObject: body)
 
@@ -287,7 +302,7 @@ enum VisionError: LocalizedError {
     var errorDescription: String? {
         switch self {
         case .missingAPIKey:
-            return "Add your OpenAI API key in Secrets.plist to identify artworks."
+            return "Add your DeepSeek API key in Secrets.plist to identify artworks."
         case .invalidURL:
             return "The identification service address is invalid."
         case .invalidResponse:

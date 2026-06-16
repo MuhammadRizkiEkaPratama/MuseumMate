@@ -15,7 +15,7 @@ struct ScanResult: Codable, Identifiable, Equatable {
     var thumbnailFileName: String?   // 300×300 JPEG for list/grid views
     var localStyle: String           // Core ML result
     var localConfidence: Double
-    var artwork: Artwork?            // GPT-4o result (nil when offline)
+    var artwork: Artwork?            // DeepSeek result (nil when offline)
     var isFavorite: Bool = false
 }
 

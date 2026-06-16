@@ -4,7 +4,7 @@
 //
 //  Orchestrates the scan pipeline: instant offline style detection, then
 //  cloud identification, then persistence. The local style appears in
-//  ~100ms so the app feels alive long before GPT-4o responds.
+//  ~100ms so the app feels alive long before DeepSeek responds.
 //
 
 import SwiftUI

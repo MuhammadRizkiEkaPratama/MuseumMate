@@ -2,7 +2,7 @@
 //  Artwork.swift
 //  MuseumMate
 //
-//  The GPT-4o identification result. Field names and CodingKeys are a
+//  The DeepSeek identification result. Field names and CodingKeys are a
 //  binding contract with VisionService — do not rename them.
 //
 

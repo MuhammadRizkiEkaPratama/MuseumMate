@@ -5,7 +5,7 @@
 //  Offline art-style classification via Core ML. Degrades gracefully:
 //  if ArtStyleClassifier.mlmodelc is not bundled, isMLAvailable stays
 //  false and classify() is a safe no-op — the app never crashes and the
-//  GPT-4o path still works.
+//  DeepSeek cloud path still works.
 //
 
 import Vision

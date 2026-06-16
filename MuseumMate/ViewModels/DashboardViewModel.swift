@@ -2,9 +2,9 @@
 //  DashboardViewModel.swift
 //  MuseumMate
 //
-//  Loads the daily painting (Met API), GPT quote + trivia, "On This Day"
+//  Loads the daily painting (Met API), DeepSeek quote + trivia, "On This Day"
 //  events, and nearby museums. Everything is cached per day so repeat
-//  visits are instant and GPT is called at most once per day per item.
+//  visits are instant and DeepSeek is called at most once per day per item.
 //
 
 import SwiftUI

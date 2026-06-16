@@ -294,3 +294,28 @@ Notes       : New UnifiedScanViewModel merges the old ExploreViewModel (live
               Verified BUILD SUCCEEDED, warning-clean, Xcode 14.3.1 / iOS 16.4
               simulator; pbxproj plutil-lint OK.
 ```
+
+```
+Ticket #012
+Assigned to : vision-integration
+Phase       : Migration
+Task        : Replace OpenAI GPT-4o with DeepSeek V4 Pro across
+              all API call sites
+Status      : Completed
+Iterations  : 1
+Collaboration: Handed off to user for key setup + build test
+Notes       : Endpoint changed to api.deepseek.com/chat/completions,
+              model deepseek-v4-pro. API is OpenAI-compatible —
+              zero request body changes required. User must paste
+              DeepSeek key into Secrets.plist before testing.
+              Both call sites live in VisionService: identifyArtwork
+              (image) and completeText (text-only quote/trivia/On-This-
+              Day used by DashboardViewModel). AppConfig key renamed
+              OpenAIAPIKey → DeepSeekAPIKey (property openAIAPIKey →
+              deepSeekAPIKey), placeholder → YOUR_DEEPSEEK_API_KEY.
+              Secrets.plist template created (gitignored). Lingering
+              GPT-4o/OpenAI comments across Models/ViewModels/Services
+              updated to DeepSeek; only the verbatim pricing-comparison
+              comment retains the GPT-4o name. BUILD SUCCEEDED, warning-
+              clean, Xcode 14.3.1 / iOS 16.4.
+```
