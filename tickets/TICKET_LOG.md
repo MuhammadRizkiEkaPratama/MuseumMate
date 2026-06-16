@@ -245,3 +245,52 @@ Notes       : MemoryPhoto model + MemoriesStore (UserDefaults, key
               warning-clean, Xcode 14.3.1 / iOS 16.4 simulator. 17 new Swift
               files + 3 new view groups wired into the project.
 ```
+
+```
+Ticket #011
+Assigned to : ui-ux / vision-integration / coreml
+Phase       : Phase 8A
+Task        : Merge Explore + Scan into one unified Scan tab (Opsi C:
+              fullscreen live camera + swipe-up bottom sheet import)
+Status      : Completed
+Iterations  : 1
+Collaboration: Handed back to user for Xcode build & test before Phase 8B
+              (Firebase)
+Notes       : New UnifiedScanViewModel merges the old ExploreViewModel (live
+              CameraService → Core ML classifier, throttled frame stream) and
+              ScanViewModel pipeline (VisionService cloud ID + persistence)
+              into one @MainActor object: detectedStyle/styleConfidence,
+              isScanning/scanPhase, currentResult, errorMessage,
+              importPreview, sheetState (.collapsed/.halfExpanded/.fullExpanded).
+              A Combine sink pauses the camera at .fullExpanded for battery.
+              Embedded RecentPhotosLoader fetches the 10 most-recent
+              PHPhotoLibrary thumbnails and resolves full-res on tap.
+              UnifiedScanView: Z-stacked layers — fullscreen camera
+              (.ignoresSafeArea, simulator placeholder), background dimmer
+              (tap-to-collapse), top overlay (serif wordmark + glass torch
+              toggle, shown only when AVCaptureDevice.hasTorch), live style
+              badge (hidden when ML unavailable, no "Searching…"), 72pt gold
+              shutter (ShutterButtonStyle scale 0.92, pulsing ring while
+              scanning, shutter-flash on capture honoring Reduce Motion), and
+              a custom draggable bottom sheet. Sheet: ultraThinMaterial +
+              appBackground.opacity(0.85), top-only 24pt corners via custom
+              InsettableShape, 36×4 handle, peek "Import Photo" row, recent-
+              photos strip, Choose-from-Library / Browse-All buttons.
+              DragGesture(minimumDistance:10) drives a live offset; onEnded
+              snaps by predicted-end velocity (±200) or nearest position with
+              spring(response:0.35, dampingFraction:0.75) (eased when Reduce
+              Motion). Controls fade + ride up with the sheet. Camera scans
+              show phase capsule + flash; import scans show a full-screen
+              preview-behind-dark overlay with pulsing ring. Success →
+              collapse sheet, 0.2s delay, navigationDestination(isPresented:)
+              push to ArtworkDetailView with a custom "← Camera" back button;
+              failure → inline danger-bordered error card above the sheet,
+              auto-dismiss after 4s. Added torch (hasTorch/toggleTorch/
+              isTorchOn) to CameraService. ContentView tab 1 now
+              UnifiedScanView with "camera.aperture". Removed ExploreView,
+              ScanView, ExploreViewModel (files + pbxproj refs). Kept
+              CameraPreviewView, StyleOverlayView, ImagePicker, CameraService;
+              ScanViewModel left in place (logic merged, now unreferenced).
+              Verified BUILD SUCCEEDED, warning-clean, Xcode 14.3.1 / iOS 16.4
+              simulator; pbxproj plutil-lint OK.
+```

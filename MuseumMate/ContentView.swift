@@ -26,8 +26,8 @@ struct ContentView: View {
                 .tabItem { Label("Dashboard", systemImage: "square.grid.2x2") }
                 .tag(AppTab.dashboard)
 
-            ScanView()
-                .tabItem { Label("Scan", systemImage: "viewfinder.circle") }
+            UnifiedScanView()
+                .tabItem { Label("Scan", systemImage: "camera.aperture") }
                 .tag(AppTab.scan)
 
             CollectionView(selectedTab: $selection)

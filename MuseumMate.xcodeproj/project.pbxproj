@@ -18,8 +18,9 @@
 		0FF200020000000000000000 /* Artwork.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0FF100020000000000000000 /* Artwork.swift */; };
 		0FF200030000000000000000 /* ScanResult.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0FF100030000000000000000 /* ScanResult.swift */; };
 		0FF200040000000000000000 /* UserProfile.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0FF100040000000000000000 /* UserProfile.swift */; };
-		0FF200050000000000000000 /* ExploreViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0FF100050000000000000000 /* ExploreViewModel.swift */; };
 		0FF200060000000000000000 /* ScanViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0FF100060000000000000000 /* ScanViewModel.swift */; };
+		0FF2FF040000000000000000 /* UnifiedScanViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0FF1FF040000000000000000 /* UnifiedScanViewModel.swift */; };
+		0FF2FF050000000000000000 /* UnifiedScanView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0FF1FF050000000000000000 /* UnifiedScanView.swift */; };
 		0FF200070000000000000000 /* AppConfig.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0FF100070000000000000000 /* AppConfig.swift */; };
 		0FF200080000000000000000 /* ArtStyleClassifierService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0FF100080000000000000000 /* ArtStyleClassifierService.swift */; };
 		0FF200090000000000000000 /* AuthService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0FF100090000000000000000 /* AuthService.swift */; };
@@ -29,11 +30,9 @@
 		0FF2000D0000000000000000 /* ScanHistoryStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0FF1000D0000000000000000 /* ScanHistoryStore.swift */; };
 		0FF2000E0000000000000000 /* VisionService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0FF1000E0000000000000000 /* VisionService.swift */; };
 		0FF2000F0000000000000000 /* CameraPreviewView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0FF1000F0000000000000000 /* CameraPreviewView.swift */; };
-		0FF200100000000000000000 /* ExploreView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0FF100100000000000000000 /* ExploreView.swift */; };
 		0FF200110000000000000000 /* StyleOverlayView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0FF100110000000000000000 /* StyleOverlayView.swift */; };
 		0FF200120000000000000000 /* ArtworkDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0FF100120000000000000000 /* ArtworkDetailView.swift */; };
 		0FF200130000000000000000 /* ImagePicker.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0FF100130000000000000000 /* ImagePicker.swift */; };
-		0FF200140000000000000000 /* ScanView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0FF100140000000000000000 /* ScanView.swift */; };
 		0FF200150000000000000000 /* HistoryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0FF100150000000000000000 /* HistoryView.swift */; };
 		0FF200160000000000000000 /* FavoritesView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0FF100160000000000000000 /* FavoritesView.swift */; };
 		0FF200170000000000000000 /* ProfileView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0FF100170000000000000000 /* ProfileView.swift */; };
@@ -77,8 +76,9 @@
 		0FF100020000000000000000 /* Artwork.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Artwork.swift; sourceTree = "<group>"; };
 		0FF100030000000000000000 /* ScanResult.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScanResult.swift; sourceTree = "<group>"; };
 		0FF100040000000000000000 /* UserProfile.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UserProfile.swift; sourceTree = "<group>"; };
-		0FF100050000000000000000 /* ExploreViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExploreViewModel.swift; sourceTree = "<group>"; };
 		0FF100060000000000000000 /* ScanViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScanViewModel.swift; sourceTree = "<group>"; };
+		0FF1FF040000000000000000 /* UnifiedScanViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UnifiedScanViewModel.swift; sourceTree = "<group>"; };
+		0FF1FF050000000000000000 /* UnifiedScanView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UnifiedScanView.swift; sourceTree = "<group>"; };
 		0FF100070000000000000000 /* AppConfig.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppConfig.swift; sourceTree = "<group>"; };
 		0FF100080000000000000000 /* ArtStyleClassifierService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ArtStyleClassifierService.swift; sourceTree = "<group>"; };
 		0FF100090000000000000000 /* AuthService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthService.swift; sourceTree = "<group>"; };
@@ -88,11 +88,9 @@
 		0FF1000D0000000000000000 /* ScanHistoryStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScanHistoryStore.swift; sourceTree = "<group>"; };
 		0FF1000E0000000000000000 /* VisionService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VisionService.swift; sourceTree = "<group>"; };
 		0FF1000F0000000000000000 /* CameraPreviewView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CameraPreviewView.swift; sourceTree = "<group>"; };
-		0FF100100000000000000000 /* ExploreView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExploreView.swift; sourceTree = "<group>"; };
 		0FF100110000000000000000 /* StyleOverlayView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StyleOverlayView.swift; sourceTree = "<group>"; };
 		0FF100120000000000000000 /* ArtworkDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ArtworkDetailView.swift; sourceTree = "<group>"; };
 		0FF100130000000000000000 /* ImagePicker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImagePicker.swift; sourceTree = "<group>"; };
-		0FF100140000000000000000 /* ScanView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScanView.swift; sourceTree = "<group>"; };
 		0FF100150000000000000000 /* HistoryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HistoryView.swift; sourceTree = "<group>"; };
 		0FF100160000000000000000 /* FavoritesView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FavoritesView.swift; sourceTree = "<group>"; };
 		0FF100170000000000000000 /* ProfileView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfileView.swift; sourceTree = "<group>"; };
@@ -196,8 +194,8 @@
 			children = (
 				0FF100460000000000000000 /* DashboardViewModel.swift */,
 				0FF100470000000000000000 /* MemoriesViewModel.swift */,
-				0FF100050000000000000000 /* ExploreViewModel.swift */,
 				0FF100060000000000000000 /* ScanViewModel.swift */,
+				0FF1FF040000000000000000 /* UnifiedScanViewModel.swift */,
 			);
 			path = ViewModels;
 			sourceTree = "<group>";
@@ -242,7 +240,6 @@
 			isa = PBXGroup;
 			children = (
 				0FF1000F0000000000000000 /* CameraPreviewView.swift */,
-				0FF100100000000000000000 /* ExploreView.swift */,
 				0FF100110000000000000000 /* StyleOverlayView.swift */,
 			);
 			path = Explore;
@@ -253,7 +250,7 @@
 			children = (
 				0FF100120000000000000000 /* ArtworkDetailView.swift */,
 				0FF100130000000000000000 /* ImagePicker.swift */,
-				0FF100140000000000000000 /* ScanView.swift */,
+				0FF1FF050000000000000000 /* UnifiedScanView.swift */,
 			);
 			path = Scan;
 			sourceTree = "<group>";
@@ -454,8 +451,9 @@
 				0FF200020000000000000000 /* Artwork.swift in Sources */,
 				0FF200030000000000000000 /* ScanResult.swift in Sources */,
 				0FF200040000000000000000 /* UserProfile.swift in Sources */,
-				0FF200050000000000000000 /* ExploreViewModel.swift in Sources */,
 				0FF200060000000000000000 /* ScanViewModel.swift in Sources */,
+				0FF2FF040000000000000000 /* UnifiedScanViewModel.swift in Sources */,
+				0FF2FF050000000000000000 /* UnifiedScanView.swift in Sources */,
 				0FF200070000000000000000 /* AppConfig.swift in Sources */,
 				0FF200080000000000000000 /* ArtStyleClassifierService.swift in Sources */,
 				0FF200090000000000000000 /* AuthService.swift in Sources */,
@@ -465,11 +463,9 @@
 				0FF2000D0000000000000000 /* ScanHistoryStore.swift in Sources */,
 				0FF2000E0000000000000000 /* VisionService.swift in Sources */,
 				0FF2000F0000000000000000 /* CameraPreviewView.swift in Sources */,
-				0FF200100000000000000000 /* ExploreView.swift in Sources */,
 				0FF200110000000000000000 /* StyleOverlayView.swift in Sources */,
 				0FF200120000000000000000 /* ArtworkDetailView.swift in Sources */,
 				0FF200130000000000000000 /* ImagePicker.swift in Sources */,
-				0FF200140000000000000000 /* ScanView.swift in Sources */,
 				0FF200150000000000000000 /* HistoryView.swift in Sources */,
 				0FF200160000000000000000 /* FavoritesView.swift in Sources */,
 				0FF200170000000000000000 /* ProfileView.swift in Sources */,

@@ -14,8 +14,14 @@ import UIKit
 final class CameraService: NSObject, ObservableObject {
     @Published var permissionDenied = false
     @Published var isRunning = false
+    @Published var isTorchOn = false
 
     let session = AVCaptureSession()
+
+    /// Whether the back camera exposes a torch (false on Simulator / front-only devices).
+    var hasTorch: Bool {
+        AVCaptureDevice.default(.builtInWideAngleCamera, for: .video, position: .back)?.hasTorch ?? false
+    }
 
     /// Called on a background queue with ~2 fps of frames.
     var onFrame: ((CGImage) -> Void)?
@@ -55,8 +61,26 @@ final class CameraService: NSObject, ObservableObject {
         sessionQueue.async {
             if self.session.isRunning {
                 self.session.stopRunning()
-                DispatchQueue.main.async { self.isRunning = false }
+                DispatchQueue.main.async {
+                    self.isRunning = false
+                    self.isTorchOn = false   // torch turns off with the session
+                }
             }
+        }
+    }
+
+    /// Toggle the back-camera torch. No-op when the device has no torch.
+    func toggleTorch() {
+        sessionQueue.async {
+            guard
+                let device = AVCaptureDevice.default(.builtInWideAngleCamera, for: .video, position: .back),
+                device.hasTorch,
+                (try? device.lockForConfiguration()) != nil
+            else { return }
+            let turnOn = !device.isTorchActive
+            device.torchMode = turnOn ? .on : .off
+            device.unlockForConfiguration()
+            DispatchQueue.main.async { self.isTorchOn = turnOn }
         }
     }
 
