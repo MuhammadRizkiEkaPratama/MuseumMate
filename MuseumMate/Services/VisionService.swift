@@ -45,8 +45,9 @@ final class VisionService {
 
     /// Stage 2 prompt: DeepSeek identifies the work from Qwen's visual analysis.
     private let reasoningSystemPrompt = """
-    You are an expert art historian. Based on the visual analysis provided by the user, \
-    identify the specific artwork. Respond ONLY with valid JSON — no markdown, no extra text:
+    You are an expert art historian and poet. Based on the visual analysis provided by \
+    the user, identify the specific artwork. Respond ONLY with valid JSON — no markdown, \
+    no extra text:
     {
       "title": "...",
       "artist": "...",
@@ -56,11 +57,19 @@ final class VisionService {
       "location": "the museum or gallery currently holding the original",
       "description": "2-3 paragraph rich explanation: history, meaning, technique",
       "fun_facts": ["fact 1", "fact 2", "fact 3"],
-      "confidence": 0.0 to 1.0
+      "confidence": 0.0 to 1.0,
+      "quote": "A poetic or philosophical quote (1-2 sentences) this artwork evokes — \
+    either a famous quote by the artist, or a reflection the painting inspires",
+      "creation_story": "The backstory of how and why this specific artwork was created \
+    — the circumstances, the artist's emotional state, the intent, and the creative \
+    process (2-3 sentences)",
+      "romantic_line": "A sweet, poetic romantic sentence inspired by the mood, \
+    imagery, and emotion of this artwork — something beautiful to say to someone \
+    special while looking at this together (1 sentence, tender and imaginative)"
     }
     Never leave a field empty. If you cannot identify the specific work, set title to \
-    "Unknown" and a low confidence, but still fill style, medium, a general description, \
-    and fun facts so the result remains useful.
+    "Unknown" and a low confidence, but still fill all other fields with thoughtful \
+    general responses so the result remains useful and beautiful.
     """
 
     // MARK: - Public API
@@ -84,7 +93,7 @@ final class VisionService {
         Identify this artwork and respond with the JSON.
         """
         let content = try await completeText(
-            system: reasoningSystemPrompt, user: user, maxTokens: 1200, temperature: 0.3
+            system: reasoningSystemPrompt, user: user, maxTokens: 2000, temperature: 0.3
         )
         return try decodeArtwork(from: content)
     }

@@ -19,10 +19,52 @@ struct Artwork: Codable, Identifiable, Equatable {
     var description: String
     var funFacts: [String]
     var confidence: Double
+    var quote: String          // poetic quote this artwork evokes
+    var creationStory: String  // backstory of how/why this was painted
+    var romanticLine: String   // sweet line to share with someone special
 
     enum CodingKeys: String, CodingKey {
         case title, artist, year, medium, style
         case location, description, funFacts = "fun_facts", confidence
+        case quote
+        case creationStory = "creation_story"
+        case romanticLine = "romantic_line"
+    }
+
+    // Custom decoder so old persisted Artwork objects (without the new fields)
+    // still decode successfully — missing keys fall back to empty strings.
+    init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        title         = (try? c.decode(String.self,   forKey: .title))         ?? ""
+        artist        = (try? c.decode(String.self,   forKey: .artist))        ?? ""
+        year          = (try? c.decode(String.self,   forKey: .year))          ?? ""
+        medium        = (try? c.decode(String.self,   forKey: .medium))        ?? ""
+        style         = (try? c.decode(String.self,   forKey: .style))         ?? ""
+        location      = (try? c.decode(String.self,   forKey: .location))      ?? ""
+        description   = (try? c.decode(String.self,   forKey: .description))   ?? ""
+        funFacts      = (try? c.decode([String].self, forKey: .funFacts))      ?? []
+        confidence    = (try? c.decode(Double.self,   forKey: .confidence))    ?? 0
+        quote         = (try? c.decode(String.self,   forKey: .quote))         ?? ""
+        creationStory = (try? c.decode(String.self,   forKey: .creationStory)) ?? ""
+        romanticLine  = (try? c.decode(String.self,   forKey: .romanticLine))  ?? ""
+    }
+
+    // Memberwise init for previews and manual construction.
+    init(title: String, artist: String, year: String, medium: String, style: String,
+         location: String, description: String, funFacts: [String], confidence: Double,
+         quote: String = "", creationStory: String = "", romanticLine: String = "") {
+        self.title         = title
+        self.artist        = artist
+        self.year          = year
+        self.medium        = medium
+        self.style         = style
+        self.location      = location
+        self.description   = description
+        self.funFacts      = funFacts
+        self.confidence    = confidence
+        self.quote         = quote
+        self.creationStory = creationStory
+        self.romanticLine  = romanticLine
     }
 }
 
@@ -53,6 +95,9 @@ extension Artwork {
             "It is one of the most recognized paintings in Western art.",
             "The cypress tree in the foreground traditionally symbolizes death and eternity."
         ],
-        confidence: 0.97
+        confidence: 0.97,
+        quote: "I dream of painting and then I paint my dream.",
+        creationStory: "Van Gogh painted The Starry Night while voluntarily residing at the Saint-Paul-de-Mausole asylum following his breakdown in Arles. He requested to paint in his room and the surrounding wheat fields, producing over 150 works during his year there. The swirling night sky was born from a desperate longing for the world beyond his barred window.",
+        romanticLine: "Like van Gogh's stars, every time I look at you, the whole sky seems to swirl just for us."
     )
 }

@@ -40,10 +40,16 @@ struct ArtworkDetailView: View {
                         .fadeSlideIn(delay: 0.12)
                     descriptionSection
                         .fadeSlideIn(delay: 0.18)
-                    funFactsCard
+                    creationStorySection
                         .fadeSlideIn(delay: 0.24)
-                    actionBar
+                    quoteSection
                         .fadeSlideIn(delay: 0.30)
+                    romanticLineSection
+                        .fadeSlideIn(delay: 0.36)
+                    funFactsCard
+                        .fadeSlideIn(delay: 0.42)
+                    actionBar
+                        .fadeSlideIn(delay: 0.48)
                 }
                 .padding(.horizontal, 24)
             }
@@ -207,6 +213,102 @@ struct ArtworkDetailView: View {
                     .foregroundStyle(Color.appTextPrimary.opacity(0.92))
                     .lineSpacing(7)
                     .fixedSize(horizontal: false, vertical: true)
+            }
+        }
+    }
+
+    // MARK: - Creation story
+
+    @ViewBuilder
+    private var creationStorySection: some View {
+        if let story = artwork?.creationStory, !story.isEmpty {
+            VStack(alignment: .leading, spacing: 12) {
+                Text("Origin").sectionLabel()
+                Text(story)
+                    .font(.system(size: 15))
+                    .foregroundStyle(Color.appTextPrimary.opacity(0.88))
+                    .lineSpacing(6)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+        }
+    }
+
+    // MARK: - Quote
+
+    @ViewBuilder
+    private var quoteSection: some View {
+        if let quote = artwork?.quote, !quote.isEmpty {
+            VStack(alignment: .leading, spacing: 0) {
+                Text("Inspiration").sectionLabel()
+                    .padding(.bottom, 12)
+                HStack(alignment: .top, spacing: 14) {
+                    Text("\u{201C}")
+                        .font(.system(size: 52, design: .serif).weight(.light))
+                        .foregroundStyle(Color.appAccent.opacity(0.6))
+                        .offset(y: -8)
+                    Text(quote)
+                        .font(.system(size: 17, design: .serif).weight(.light))
+                        .italic()
+                        .foregroundStyle(Color.appTextPrimary)
+                        .lineSpacing(7)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+                .padding(18)
+                .background(
+                    RoundedRectangle(cornerRadius: 14, style: .continuous)
+                        .fill(Color.appSurface)
+                )
+                .overlay(
+                    RoundedRectangle(cornerRadius: 14, style: .continuous)
+                        .strokeBorder(Color.appAccent.opacity(0.18), lineWidth: 0.5)
+                )
+            }
+        }
+    }
+
+    // MARK: - Romantic line
+
+    @ViewBuilder
+    private var romanticLineSection: some View {
+        if let line = artwork?.romanticLine, !line.isEmpty {
+            VStack(alignment: .leading, spacing: 12) {
+                Text("Share the Love").sectionLabel()
+                VStack(alignment: .leading, spacing: 14) {
+                    Text(line)
+                        .font(.system(size: 15, design: .serif).weight(.light))
+                        .italic()
+                        .foregroundStyle(Color.appTextPrimary)
+                        .lineSpacing(6)
+                        .fixedSize(horizontal: false, vertical: true)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                    Button {
+                        UIPasteboard.general.string = line
+                        Haptics.tap()
+                    } label: {
+                        HStack(spacing: 6) {
+                            Image(systemName: "doc.on.doc")
+                                .font(.system(size: 12, weight: .medium))
+                            Text("Copy Line")
+                                .font(.caption.weight(.semibold))
+                        }
+                        .foregroundStyle(Color.appAccent)
+                        .padding(.horizontal, 14)
+                        .padding(.vertical, 7)
+                        .background(
+                            Capsule().fill(Color.appAccent.opacity(0.14))
+                        )
+                    }
+                    .buttonStyle(.pressable)
+                }
+                .padding(16)
+                .background(
+                    RoundedRectangle(cornerRadius: 14, style: .continuous)
+                        .fill(Color.appSurface)
+                )
+                .overlay(
+                    RoundedRectangle(cornerRadius: 14, style: .continuous)
+                        .strokeBorder(Color.appAccent.opacity(0.25), lineWidth: 0.5)
+                )
             }
         }
     }
