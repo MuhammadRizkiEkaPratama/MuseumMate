@@ -31,14 +31,27 @@ final class MetMuseumService {
 
     func fetchDailyPainting() async throws -> MetObject {
         let today = Self.todayString()
+        print("[MetMuseumService] fetchDailyPainting() called for \(today)")
 
         // Return today's cached painting if present.
         if let cached = cachedPainting(for: today) {
+            print("[MetMuseumService] cache hit — returning '\(cached.title)'")
             return cached
         }
 
-        let ids = try await fetchHighlightIDs()
-        guard !ids.isEmpty else { throw MetMuseumError.noValidObject }
+        print("[MetMuseumService] no cache — fetching highlight IDs from Met API")
+        let ids: [Int]
+        do {
+            ids = try await fetchHighlightIDs()
+        } catch {
+            print("[MetMuseumService] fetchHighlightIDs error: \(error)")
+            throw error
+        }
+        guard !ids.isEmpty else {
+            print("[MetMuseumService] objectIDs array is empty")
+            throw MetMuseumError.noValidObject
+        }
+        print("[MetMuseumService] received \(ids.count) highlight object IDs")
 
         let seed = Self.dailySeed()
         let startIndex = seed % ids.count
@@ -46,12 +59,18 @@ final class MetMuseumService {
         // Try up to 5 consecutive objects until one has a usable image.
         for offset in 0..<5 {
             let index = (startIndex + offset) % ids.count
-            if let object = try? await fetchObjectDetail(id: ids[index]),
+            let objectID = ids[index]
+            print("[MetMuseumService] trying objectID \(objectID) (offset \(offset))")
+            if let object = try? await fetchObjectDetail(id: objectID),
                object.hasValidImage, !object.title.isEmpty {
+                print("[MetMuseumService] found: '\(object.title)' by \(object.artistDisplayName)")
                 cachePainting(object, for: today)
                 return object
+            } else {
+                print("[MetMuseumService] objectID \(objectID) skipped (no image or empty title)")
             }
         }
+        print("[MetMuseumService] all 5 candidates failed — throwing noValidObject")
         throw MetMuseumError.noValidObject
     }
 
@@ -70,13 +89,19 @@ final class MetMuseumService {
     // MARK: - Highlights
 
     private func fetchHighlightIDs() async throws -> [Int] {
-        guard let url = URL(string: "\(base)/objects?isHighlight=true&hasImages=true") else {
+        let urlString = "\(base)/objects?isHighlight=true&hasImages=true"
+        print("[MetMuseumService] GET \(urlString)")
+        guard let url = URL(string: urlString) else {
             throw MetMuseumError.networkUnavailable
         }
         let data = try await load(url)
         do {
-            return try JSONDecoder().decode(MetObjectIDs.self, from: data).objectIDs ?? []
+            let result = try JSONDecoder().decode(MetObjectIDs.self, from: data)
+            let ids = result.objectIDs ?? []
+            print("[MetMuseumService] total highlighted objects: \(result.total), returned IDs: \(ids.count)")
+            return ids
         } catch {
+            print("[MetMuseumService] decoding objectIDs failed: \(error)")
             throw MetMuseumError.decodingFailed
         }
     }
@@ -86,13 +111,19 @@ final class MetMuseumService {
     private func load(_ url: URL) async throws -> Data {
         do {
             let (data, response) = try await URLSession.shared.data(from: url)
-            guard let http = response as? HTTPURLResponse, (200...299).contains(http.statusCode) else {
+            guard let http = response as? HTTPURLResponse else {
+                print("[MetMuseumService] non-HTTP response from \(url.host ?? url.absoluteString)")
+                throw MetMuseumError.networkUnavailable
+            }
+            guard (200...299).contains(http.statusCode) else {
+                print("[MetMuseumService] HTTP \(http.statusCode) from \(url.host ?? url.absoluteString)")
                 throw MetMuseumError.networkUnavailable
             }
             return data
         } catch let error as MetMuseumError {
             throw error
         } catch {
+            print("[MetMuseumService] network error: \(error.localizedDescription)")
             throw MetMuseumError.networkUnavailable
         }
     }

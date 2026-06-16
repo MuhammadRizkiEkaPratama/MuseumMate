@@ -351,3 +351,35 @@ Notes       : Model resource name changed: ArtStyleClassifier → ArtistClassifi
               Labels normalize: underscores → spaces at classify time.
               Graceful fallback preserved: isMLAvailable=false if model absent.
 ```
+
+```
+Ticket #014
+Assigned to : vision-integration / qa
+Phase       : Phase 7A (Dashboard)
+Task        : Fix dashboard loading — Met API fallback, debug logging,
+              On This Day June events, ATS config.
+Status      : Completed
+Iterations  : 1
+Collaboration: Handed back to user for Xcode build & test
+Notes       : Root causes identified:
+              (1) June 16 had no ArtHistoryEvent entries — added 5 new June
+              events: June 6 Uffizi opens (1755), June 8 Frank Lloyd Wright
+              born (1869), June 15 Gauguin moves to Brittany (1888), June 16
+              Frida Kahlo posthumous solo exhibition (1958), June 29
+              Saint-Exupery born (1900).
+              (2) Info.plist had no NSAppTransportSecurity entry — added
+              NSExceptionDomains for collectionapi.metmuseum.org and
+              images.metmuseum.org (HTTPS only, TLSv1.2).
+              (3) MetMuseumService had no debug output — added print() at
+              every step: cache hit, GET URL, objectID count, each candidate
+              tried, HTTP errors, network errors.
+              (4) DashboardViewModel.loadDailyContent() silently set
+              errorMessage on API failure, leaving dailyPainting=nil —
+              changed to use MetObject.fallback (Van Gogh objectID 436535
+              with real image URLs) so dashboard always shows content.
+              (5) fetchQuoteIfNeeded / fetchTriviaIfNeeded used silent try?
+              — changed to do-catch with print(); also check
+              AppConfig.hasValidAPIKey first and log if key missing.
+              MetObject.fallback static added (distinct from preview which
+              has empty image URLs).
+```

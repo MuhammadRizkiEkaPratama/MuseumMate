@@ -118,16 +118,20 @@ final class DashboardViewModel: ObservableObject {
     }
 
     private func loadDailyContent() async {
+        print("[DashboardViewModel] loadDailyContent() started")
         isLoadingPainting = true
         do {
             let painting = try await met.fetchDailyPainting()
+            print("[DashboardViewModel] painting loaded: '\(painting.title)' by \(painting.artistDisplayName)")
             dailyPainting = painting
             isLoadingPainting = false
             await loadQuoteAndTrivia(for: painting)
         } catch {
+            print("[DashboardViewModel] fetchDailyPainting failed: \(error.localizedDescription) — using fallback")
             isLoadingPainting = false
-            errorMessage = (error as? LocalizedError)?.errorDescription
-                ?? "Couldn't load today's painting."
+            let fallback = MetObject.fallback
+            dailyPainting = fallback
+            await loadQuoteAndTrivia(for: fallback)
         }
     }
 
@@ -146,22 +150,48 @@ final class DashboardViewModel: ObservableObject {
     }
 
     private func fetchQuoteIfNeeded(_ painting: MetObject) async {
-        guard dailyQuote.isEmpty else { return }
+        guard dailyQuote.isEmpty else {
+            print("[DashboardViewModel] quote already loaded, skipping")
+            return
+        }
+        guard AppConfig.hasValidAPIKey else {
+            print("[DashboardViewModel] DeepSeek key missing — quote skipped (add DeepSeekAPIKey to Secrets.plist)")
+            return
+        }
+        print("[DashboardViewModel] fetching quote for '\(painting.title)'")
         isLoadingQuote = true
         defer { isLoadingQuote = false }
-        if let quote = try? await vision.generateArtworkQuote(painting: painting), !quote.isEmpty {
-            dailyQuote = quote
-            DailyCache.save(quote, key: quoteKey)
+        do {
+            let quote = try await vision.generateArtworkQuote(painting: painting)
+            if !quote.isEmpty {
+                print("[DashboardViewModel] quote received (\(quote.count) chars)")
+                dailyQuote = quote
+                DailyCache.save(quote, key: quoteKey)
+            }
+        } catch {
+            print("[DashboardViewModel] quote generation failed: \(error.localizedDescription)")
         }
     }
 
     private func fetchTriviaIfNeeded(_ painting: MetObject) async {
-        guard dailyTrivia == nil else { return }
+        guard dailyTrivia == nil else {
+            print("[DashboardViewModel] trivia already loaded, skipping")
+            return
+        }
+        guard AppConfig.hasValidAPIKey else {
+            print("[DashboardViewModel] DeepSeek key missing — trivia skipped (add DeepSeekAPIKey to Secrets.plist)")
+            return
+        }
+        print("[DashboardViewModel] fetching trivia for '\(painting.title)'")
         isLoadingTrivia = true
         defer { isLoadingTrivia = false }
-        if let trivia = try? await vision.generateDailyTrivia(painting: painting) {
+        do {
+            let trivia = try await vision.generateDailyTrivia(painting: painting)
+            print("[DashboardViewModel] trivia received")
             dailyTrivia = trivia
             DailyCache.save(trivia, key: triviaKey)
+        } catch {
+            print("[DashboardViewModel] trivia generation failed: \(error.localizedDescription)")
         }
     }
 

@@ -89,11 +89,16 @@ enum ArtHistoryLibrary {
         e(5, 21, 1471, "Albrecht Dürer was born", "May 21, 1471", .birth),
 
         // June
-        e(6, 6, 1599, "Diego Velázquez was baptized", "June 6, 1599", .birth),
-        e(6, 7, 1848, "Paul Gauguin was born", "June 7, 1848", .birth),
-        e(6, 10, 1819, "Gustave Courbet was born", "June 10, 1819", .birth),
-        e(6, 18, 1889, "Van Gogh painted “The Starry Night”", "June 18, 1889", .creation),
-        e(6, 28, 1577, "Peter Paul Rubens was born", "June 28, 1577", .birth),
+        e(6, 6, 1599, “Diego Velázquez was baptized”, “June 6, 1599”, .birth),
+        e(6, 6, 1755, “The Uffizi Gallery opened to the public in Florence”, “June 6, 1755”, .exhibition),
+        e(6, 7, 1848, “Paul Gauguin was born”, “June 7, 1848”, .birth),
+        e(6, 8, 1869, “Frank Lloyd Wright was born”, “June 8, 1869”, .birth),
+        e(6, 10, 1819, “Gustave Courbet was born”, “June 10, 1819”, .birth),
+        e(6, 15, 1888, “Paul Gauguin moved to Pont-Aven, Brittany to paint”, “June 15, 1888”, .movement),
+        e(6, 16, 1958, “Frida Kahlo's first posthumous solo exhibition opened in Mexico City”, “June 16, 1958”, .exhibition),
+        e(6, 18, 1889, “Van Gogh painted \u{201C}The Starry Night\u{201D}”, “June 18, 1889”, .creation),
+        e(6, 28, 1577, “Peter Paul Rubens was born”, “June 28, 1577”, .birth),
+        e(6, 29, 1900, “Antoine de Saint-Exupéry, author-illustrator of The Little Prince, was born”, “June 29, 1900”, .birth),
 
         // July
         e(7, 6, 1907, "Frida Kahlo was born", "July 6, 1907", .birth),

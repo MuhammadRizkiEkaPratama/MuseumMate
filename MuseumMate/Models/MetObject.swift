@@ -80,6 +80,23 @@ struct MetObject: Codable, Identifiable, Equatable {
         period: "",
         creditLine: "Purchase, The Annenberg Foundation Gift, 1993"
     )
+
+    /// Hardcoded fallback shown when the Met API is unavailable.
+    static let fallback = MetObject(
+        objectID: 436535,
+        title: "Wheat Field with Cypresses",
+        artistDisplayName: "Vincent van Gogh",
+        objectDate: "1889",
+        medium: "Oil on canvas",
+        department: "European Paintings",
+        primaryImage: "https://images.metmuseum.org/CRDImages/ep/original/DT1567.jpg",
+        primaryImageSmall: "https://images.metmuseum.org/CRDImages/ep/web-large/DT1567.jpg",
+        objectURL: "https://www.metmuseum.org/art/collection/search/436535",
+        isHighlight: true,
+        culture: "",
+        period: "",
+        creditLine: "Purchase, The Annenberg Foundation Gift, 1993"
+    )
 }
 
 /// Response shape for /objects?isHighlight=true&hasImages=true
