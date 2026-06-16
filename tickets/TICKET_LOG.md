@@ -319,3 +319,35 @@ Notes       : Endpoint changed to api.deepseek.com/chat/completions,
               comment retains the GPT-4o name. BUILD SUCCEEDED, warning-
               clean, Xcode 14.3.1 / iOS 16.4.
 ```
+
+```
+Ticket #013
+Assigned to : coreml
+Phase       : Phase 5 (Core ML integration)
+Task        : Switch Core ML classifier to artist identification.
+              ArtistClassifier.mlmodel, 12 artists from Best Artworks dataset.
+Status      : Completed
+Iterations  : 1
+Collaboration: Handed to ui-ux (overlay badge update) and qa
+Notes       : Model resource name changed: ArtStyleClassifier → ArtistClassifier.
+              Class renamed: ArtStyleClassifierService → ArtistClassifierService.
+              @Published detectedStyle → detectedArtist.
+              ScanResult.localStyle → localArtist (field rename; Codable key
+              changes — existing UserDefaults history will lose localArtist value
+              on first decode after update, cloud artwork data is unaffected).
+              ArtStyle.swift rewritten: ArtStyle + ArtStyleLibrary replaced by
+              Artist struct (name, datasetLabel, nationality, movement, born,
+              died, accentColorHex) + ArtistLibrary (12 entries, tolerant
+              fromLabel lookup normalizing underscores/hyphens, accentColor
+              fallback to museum gold).
+              StyleOverlayView updated: badge now shows artist last name +
+              movement, accent stripe uses artist color.
+              ArtworkDetailView updated: styleBadge replaced by artistBadge —
+              "DETECTED ARTIST" sectionLabel, artist name in accent color,
+              nationality · movement row, born–died metadata.
+              All ArtStyleLibrary.accentColor(for:) calls across CollectionView,
+              FavoritesView, HistoryView → ArtistLibrary.accentColor(for:).
+              ScanViewModel (unreferenced) also updated for compile cleanliness.
+              Labels normalize: underscores → spaces at classify time.
+              Graceful fallback preserved: isMLAvailable=false if model absent.
+```

@@ -105,7 +105,7 @@ struct HistoryView: View {
 private struct HistoryRow: View {
     let result: ScanResult
 
-    private var accent: Color { ArtStyleLibrary.accentColor(for: result.displayStyle) }
+    private var accent: Color { ArtistLibrary.accentColor(for: result.displayStyle) }
 
     var body: some View {
         HStack(spacing: 14) {

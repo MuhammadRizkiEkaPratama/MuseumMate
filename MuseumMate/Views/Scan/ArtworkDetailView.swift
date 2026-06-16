@@ -19,8 +19,8 @@ struct ArtworkDetailView: View {
     @State private var heartScale: CGFloat = 1
 
     private var artwork: Artwork? { result.artwork }
-    private var styleLabel: String { result.displayStyle }
-    private var accent: Color { ArtStyleLibrary.accentColor(for: styleLabel) }
+    private var detectedArtistInfo: Artist? { ArtistLibrary.artist(fromLabel: result.localArtist) }
+    private var accent: Color { ArtistLibrary.accentColor(for: result.localArtist) }
     private var confidence: Double { artwork?.confidence ?? result.localConfidence }
 
     private var isFavorite: Bool {
@@ -103,7 +103,7 @@ struct ArtworkDetailView: View {
     @ViewBuilder
     private var identityCard: some View {
         VStack(alignment: .leading, spacing: 14) {
-            styleBadge
+            artistBadge
 
             Text(result.displayTitle)
                 .font(.system(.largeTitle, design: .serif).weight(.regular))
@@ -135,17 +135,35 @@ struct ArtworkDetailView: View {
         .frame(maxWidth: .infinity, alignment: .leading)
     }
 
-    private var styleBadge: some View {
-        Text(styleLabel)
-            .font(.caption.weight(.semibold))
-            .textCase(.uppercase)
-            .kerning(1.2)
-            .foregroundStyle(accent)
-            .padding(.horizontal, 12)
-            .padding(.vertical, 6)
+    @ViewBuilder
+    private var artistBadge: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            Text("Detected Artist").sectionLabel()
+            HStack(alignment: .top, spacing: 10) {
+                Rectangle()
+                    .fill(accent)
+                    .frame(width: 3)
+                    .cornerRadius(1.5)
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(detectedArtistInfo?.name ?? result.localArtist)
+                        .font(.subheadline.weight(.semibold))
+                        .foregroundStyle(accent)
+                    if let info = detectedArtistInfo {
+                        Text("\(info.nationality) · \(info.movement)")
+                            .font(.caption)
+                            .foregroundStyle(Color.appTextSecondary)
+                        Text("\(info.born)–\(info.died)")
+                            .font(.caption2)
+                            .foregroundStyle(Color.appTextMuted)
+                    }
+                }
+            }
+            .padding(12)
             .background(
-                Capsule().fill(accent.opacity(0.16))
+                RoundedRectangle(cornerRadius: 10, style: .continuous)
+                    .fill(accent.opacity(0.12))
             )
+        }
     }
 
     // MARK: - Confidence

@@ -203,7 +203,7 @@ struct UnifiedScanView: View {
     private func controlsLayer(_ geo: GeometryProxy) -> some View {
         VStack(spacing: 16) {
             if showStyleBadge {
-                StyleOverlayView(style: viewModel.detectedStyle, confidence: viewModel.styleConfidence)
+                StyleOverlayView(style: viewModel.detectedArtist, confidence: viewModel.styleConfidence)
             }
             if viewModel.isScanning && viewModel.importPreview == nil {
                 phaseCapsule
@@ -548,8 +548,8 @@ struct UnifiedScanView: View {
     private var showStyleBadge: Bool {
         viewModel.isMLAvailable
             && !viewModel.permissionDenied
-            && viewModel.detectedStyle != "—"
-            && !viewModel.detectedStyle.isEmpty
+            && viewModel.detectedArtist != "—"
+            && !viewModel.detectedArtist.isEmpty
     }
 
     // MARK: - Sheet drag & snapping

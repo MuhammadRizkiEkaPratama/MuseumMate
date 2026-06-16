@@ -61,7 +61,7 @@ struct FavoritesView: View {
 private struct FavoriteCell: View {
     let result: ScanResult
 
-    private var accent: Color { ArtStyleLibrary.accentColor(for: result.displayStyle) }
+    private var accent: Color { ArtistLibrary.accentColor(for: result.displayStyle) }
 
     var body: some View {
         ScanThumbnail(result: result, cornerRadius: 16)

@@ -29,6 +29,21 @@ enum AppConfig {
         return !key.isEmpty && key != apiKeyPlaceholder
     }
 
+    /// The Qwen-VL (Alibaba DashScope) API key — the vision "eyes" of the scan
+    /// pipeline. DeepSeek cannot read images, so Qwen describes the photo first.
+    /// Get a free key at bailian.console.alibabacloud.com (Model Studio).
+    static var qwenAPIKey: String {
+        if let key = value(forKey: "QwenAPIKey"), !key.isEmpty {
+            return key
+        }
+        return apiKeyPlaceholder
+    }
+
+    static var hasValidQwenKey: Bool {
+        let key = qwenAPIKey
+        return !key.isEmpty && key != apiKeyPlaceholder
+    }
+
     // MARK: - Lookup
 
     private static func value(forKey key: String) -> String? {

@@ -2,92 +2,79 @@
 //  ArtStyle.swift
 //  MuseumMate
 //
-//  Art-style metadata. The eight names MUST match the Create ML dataset
-//  folder labels exactly (underscores are normalized to spaces at runtime).
+//  Artist metadata matching the 12 classes in ArtistClassifier.mlmodel.
+//  Labels normalize underscores and hyphens to spaces for matching.
 //
 
 import SwiftUI
 
-struct ArtStyle: Identifiable, Equatable {
+struct Artist: Identifiable {
     let id = UUID()
-    let name: String
-    let period: String
-    let shortDescription: String
+    let name: String           // display name
+    let datasetLabel: String   // exact folder name used in training
+    let nationality: String
+    let movement: String
+    let born: String
+    let died: String
     let accentColorHex: String
     var accentColor: Color { Color(hex: accentColorHex) }
-
-    static func == (lhs: ArtStyle, rhs: ArtStyle) -> Bool { lhs.name == rhs.name }
 }
 
-extension ArtStyle {
-    /// Broad historical grouping, used to organize styles in the UI.
-    var era: String {
-        switch name {
-        case "Renaissance", "Baroque":
-            return "Classical Era"
-        case "Romanticism", "Realism", "Impressionism":
-            return "19th Century"
-        case "Cubism", "Surrealism", "Pop Art":
-            return "Modern & Contemporary"
-        default:
-            return "Other Movements"
-        }
-    }
-}
-
-struct ArtStyleLibrary {
-    // 8 styles — MUST match the Create ML dataset folder labels exactly.
-    static let all: [ArtStyle] = [
-        ArtStyle(name: "Impressionism", period: "1860s–1880s",
-                 shortDescription: "Quick brushwork, focus on light and momentary impressions.",
-                 accentColorHex: "#5B8DEF"),
-        ArtStyle(name: "Baroque", period: "1600s–1750s",
-                 shortDescription: "Dramatic, strong light-dark contrast, grandeur.",
-                 accentColorHex: "#C9A227"),
-        ArtStyle(name: "Renaissance", period: "1400s–1600s",
-                 shortDescription: "Proportion, perspective, classical realism.",
-                 accentColorHex: "#A0522D"),
-        ArtStyle(name: "Cubism", period: "1907–1920s",
-                 shortDescription: "Geometric forms, multiple viewpoints at once.",
-                 accentColorHex: "#E07A5F"),
-        ArtStyle(name: "Surrealism", period: "1920s–1950s",
-                 shortDescription: "Dreams, the subconscious, illusion.",
-                 accentColorHex: "#8E7CC3"),
-        ArtStyle(name: "Pop Art", period: "1950s–1970s",
-                 shortDescription: "Popular culture, bold colors, iconic imagery.",
-                 accentColorHex: "#EF476F"),
-        ArtStyle(name: "Romanticism", period: "1800s–1850s",
-                 shortDescription: "Emotion, wild nature, the sublime.",
-                 accentColorHex: "#06A77D"),
-        ArtStyle(name: "Realism", period: "1840s–1880s",
-                 shortDescription: "Everyday life depicted as it is.",
-                 accentColorHex: "#6C757D"),
+struct ArtistLibrary {
+    // 12 artists — labels MUST match the Create ML dataset folder names exactly.
+    static let all: [Artist] = [
+        Artist(name: "Vincent van Gogh", datasetLabel: "Vincent van Gogh",
+               nationality: "Dutch", movement: "Post-Impressionism",
+               born: "1853", died: "1890", accentColorHex: "#E8B84B"),
+        Artist(name: "Edgar Degas", datasetLabel: "Edgar Degas",
+               nationality: "French", movement: "Impressionism",
+               born: "1834", died: "1917", accentColorHex: "#7B9EA6"),
+        Artist(name: "Pablo Picasso", datasetLabel: "Pablo Picasso",
+               nationality: "Spanish", movement: "Cubism",
+               born: "1881", died: "1973", accentColorHex: "#C17B5C"),
+        Artist(name: "Pierre-Auguste Renoir", datasetLabel: "Pierre-Auguste Renoir",
+               nationality: "French", movement: "Impressionism",
+               born: "1841", died: "1919", accentColorHex: "#A8C5A0"),
+        Artist(name: "Paul Gauguin", datasetLabel: "Paul Gauguin",
+               nationality: "French", movement: "Post-Impressionism",
+               born: "1848", died: "1903", accentColorHex: "#D4956A"),
+        Artist(name: "Francisco Goya", datasetLabel: "Francisco Goya",
+               nationality: "Spanish", movement: "Romanticism",
+               born: "1746", died: "1828", accentColorHex: "#8B7355"),
+        Artist(name: "Rembrandt", datasetLabel: "Rembrandt",
+               nationality: "Dutch", movement: "Baroque",
+               born: "1606", died: "1669", accentColorHex: "#C9A227"),
+        Artist(name: "Titian", datasetLabel: "Titian",
+               nationality: "Italian", movement: "Renaissance",
+               born: "1488", died: "1576", accentColorHex: "#9B6B8A"),
+        Artist(name: "Sandro Botticelli", datasetLabel: "Sandro Botticelli",
+               nationality: "Italian", movement: "Renaissance",
+               born: "1445", died: "1510", accentColorHex: "#6B8FA8"),
+        Artist(name: "Leonardo da Vinci", datasetLabel: "Leonardo da Vinci",
+               nationality: "Italian", movement: "Renaissance",
+               born: "1452", died: "1519", accentColorHex: "#8B9B6B"),
+        Artist(name: "Salvador Dali", datasetLabel: "Salvador Dali",
+               nationality: "Spanish", movement: "Surrealism",
+               born: "1904", died: "1989", accentColorHex: "#B5507A"),
+        Artist(name: "Raphael", datasetLabel: "Raphael",
+               nationality: "Italian", movement: "Renaissance",
+               born: "1483", died: "1520", accentColorHex: "#7A8BB5"),
     ]
 
-    /// Eras in display order, for grouped UI.
-    static let eras: [String] = ["Classical Era", "19th Century", "Modern & Contemporary"]
-
-    static func styles(in era: String) -> [ArtStyle] {
-        all.filter { $0.era == era }
-    }
-
-    /// Tolerant lookup — matches even when the cloud returns a richer label
-    /// like "Post-Impressionism" or an underscored Core ML identifier.
-    static func style(named name: String) -> ArtStyle? {
-        let needle = name
+    /// Tolerant lookup — normalizes underscores/hyphens to spaces, case-insensitive.
+    static func artist(fromLabel label: String) -> Artist? {
+        let needle = label
             .replacingOccurrences(of: "_", with: " ")
+            .replacingOccurrences(of: "-", with: " ")
             .trimmingCharacters(in: .whitespaces)
             .lowercased()
         guard !needle.isEmpty else { return nil }
-        if let exact = all.first(where: { $0.name.lowercased() == needle }) {
-            return exact
-        }
-        // Partial match: "post-impressionism" → Impressionism, etc.
-        return all.first { needle.contains($0.name.lowercased()) || $0.name.lowercased().contains(needle) }
+        return all.first { $0.datasetLabel.lowercased() == needle }
+            ?? all.first { $0.name.lowercased() == needle }
     }
 
-    /// Accent color for any style label, falling back to museum gold.
-    static func accentColor(for name: String) -> Color {
-        style(named: name)?.accentColor ?? .appAccent
+    /// Accent color for any artist label, falling back to museum gold.
+    static func accentColor(for label: String) -> Color {
+        artist(fromLabel: label)?.accentColor ?? .appAccent
     }
 }

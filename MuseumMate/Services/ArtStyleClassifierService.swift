@@ -1,31 +1,24 @@
-//
-//  ArtStyleClassifierService.swift
-//  MuseumMate
-//
-//  Offline art-style classification via Core ML. Degrades gracefully:
-//  if ArtStyleClassifier.mlmodelc is not bundled, isMLAvailable stays
-//  false and classify() is a safe no-op — the app never crashes and the
-//  DeepSeek cloud path still works.
-//
+// Core ML: Artist identification (offline, instant)
+// Model: ArtistClassifier.mlmodel
+// Classes: 12 artists from Best Artworks dataset
+// Trained with Create ML Image Classification
 
 import Vision
 import CoreML
 import CoreGraphics
 
-final class ArtStyleClassifierService: ObservableObject {
-    @Published var detectedStyle = "unknown"
+final class ArtistClassifierService: ObservableObject {
+    @Published var detectedArtist = "unknown"
     @Published var confidence: Double = 0.0
     @Published var isMLAvailable = false
 
     private var mlModel: VNCoreMLModel?
 
-    init() {
-        loadMLModel()
-    }
+    init() { loadMLModel() }
 
     func loadMLModel() {
         guard
-            let url = Bundle.main.url(forResource: "ArtStyleClassifier", withExtension: "mlmodelc"),
+            let url = Bundle.main.url(forResource: "ArtistClassifier", withExtension: "mlmodelc"),
             let core = try? MLModel(contentsOf: url),
             let vn = try? VNCoreMLModel(for: core)
         else {
@@ -36,9 +29,7 @@ final class ArtStyleClassifierService: ObservableObject {
         isMLAvailable = true
     }
 
-    /// Runs classification off the main actor (the method is non-isolated, so
-    /// `await` from a @MainActor caller hops to the cooperative pool), then
-    /// publishes results back on the main actor.
+    /// Runs classification off the main actor, then publishes results back on MainActor.
     func classify(cgImage: CGImage) async {
         guard let mlModel else { return }
 
@@ -49,10 +40,10 @@ final class ArtStyleClassifierService: ObservableObject {
         do {
             try handler.perform([request])
             guard let top = request.results?.first as? VNClassificationObservation else { return }
-            let style = top.identifier.replacingOccurrences(of: "_", with: " ")
+            let artist = top.identifier.replacingOccurrences(of: "_", with: " ")
             let conf = Double(top.confidence)   // VNConfidence is Float — cast explicitly
             await MainActor.run {
-                self.detectedStyle = style
+                self.detectedArtist = artist
                 self.confidence = conf
             }
         } catch {

@@ -13,7 +13,7 @@ struct ScanResult: Codable, Identifiable, Equatable {
     var date: Date
     var imageFileName: String
     var thumbnailFileName: String?   // 300×300 JPEG for list/grid views
-    var localStyle: String           // Core ML result
+    var localArtist: String          // Core ML result
     var localConfidence: Double
     var artwork: Artwork?            // DeepSeek result (nil when offline)
     var isFavorite: Bool = false
@@ -26,7 +26,7 @@ extension ScanResult {
         if let title = artwork?.title, !title.trimmingCharacters(in: .whitespaces).isEmpty {
             return title
         }
-        let style = localStyle == "unknown" ? "Artwork" : localStyle
+        let style = localArtist == "unknown" ? "Artwork" : localArtist
         return "Untitled \(style)"
     }
 
@@ -34,7 +34,7 @@ extension ScanResult {
         if let style = artwork?.style, !style.trimmingCharacters(in: .whitespaces).isEmpty {
             return style
         }
-        return localStyle
+        return localArtist
     }
 
     var formattedDate: String {
@@ -48,7 +48,7 @@ extension ScanResult {
         date: Date(),
         imageFileName: "preview.jpg",
         thumbnailFileName: nil,
-        localStyle: "Post-Impressionism",
+        localArtist: "Vincent van Gogh",
         localConfidence: 0.82,
         artwork: .preview,
         isFavorite: true

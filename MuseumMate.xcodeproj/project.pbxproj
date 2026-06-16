@@ -14,13 +14,12 @@
 		0F2772142FDA5B0000DEF486 /* Color+Theme.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0F2772112FDA5B0000DEF486 /* Color+Theme.swift */; };
 		0F2772152FDA5B0000DEF486 /* View+Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0F2772122FDA5B0000DEF486 /* View+Extensions.swift */; };
 		0F2772162FDA5B0000DEF486 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 0F2772132FDA5B0000DEF486 /* PrivacyInfo.xcprivacy */; };
+		0F2F3BF22FE1853700E87EB6 /* ArtistClassifier.mlproj in Resources */ = {isa = PBXBuildFile; fileRef = 0F2F3BF12FE1853700E87EB6 /* ArtistClassifier.mlproj */; };
 		0FF200010000000000000000 /* ArtStyle.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0FF100010000000000000000 /* ArtStyle.swift */; };
 		0FF200020000000000000000 /* Artwork.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0FF100020000000000000000 /* Artwork.swift */; };
 		0FF200030000000000000000 /* ScanResult.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0FF100030000000000000000 /* ScanResult.swift */; };
 		0FF200040000000000000000 /* UserProfile.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0FF100040000000000000000 /* UserProfile.swift */; };
 		0FF200060000000000000000 /* ScanViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0FF100060000000000000000 /* ScanViewModel.swift */; };
-		0FF2FF040000000000000000 /* UnifiedScanViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0FF1FF040000000000000000 /* UnifiedScanViewModel.swift */; };
-		0FF2FF050000000000000000 /* UnifiedScanView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0FF1FF050000000000000000 /* UnifiedScanView.swift */; };
 		0FF200070000000000000000 /* AppConfig.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0FF100070000000000000000 /* AppConfig.swift */; };
 		0FF200080000000000000000 /* ArtStyleClassifierService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0FF100080000000000000000 /* ArtStyleClassifierService.swift */; };
 		0FF200090000000000000000 /* AuthService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0FF100090000000000000000 /* AuthService.swift */; };
@@ -59,6 +58,9 @@
 		0FF2004F0000000000000000 /* CollectionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0FF1004F0000000000000000 /* CollectionView.swift */; };
 		0FF200500000000000000000 /* MemoriesView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0FF100500000000000000000 /* MemoriesView.swift */; };
 		0FF200510000000000000000 /* MemoryDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0FF100510000000000000000 /* MemoryDetailView.swift */; };
+		0FF2FF040000000000000000 /* UnifiedScanViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0FF1FF040000000000000000 /* UnifiedScanViewModel.swift */; };
+		0FF2FF050000000000000000 /* UnifiedScanView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0FF1FF050000000000000000 /* UnifiedScanView.swift */; };
+		0FF2FF060000000000000000 /* Secrets.plist in Resources */ = {isa = PBXBuildFile; fileRef = 0FF1FF060000000000000000 /* Secrets.plist */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -72,13 +74,12 @@
 		0F2772112FDA5B0000DEF486 /* Color+Theme.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Color+Theme.swift"; sourceTree = "<group>"; };
 		0F2772122FDA5B0000DEF486 /* View+Extensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "View+Extensions.swift"; sourceTree = "<group>"; };
 		0F2772132FDA5B0000DEF486 /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; lastKnownFileType = text.xml; path = PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
+		0F2F3BF12FE1853700E87EB6 /* ArtistClassifier.mlproj */ = {isa = PBXFileReference; lastKnownFileType = wrapper; path = ArtistClassifier.mlproj; sourceTree = "<group>"; };
 		0FF100010000000000000000 /* ArtStyle.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ArtStyle.swift; sourceTree = "<group>"; };
 		0FF100020000000000000000 /* Artwork.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Artwork.swift; sourceTree = "<group>"; };
 		0FF100030000000000000000 /* ScanResult.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScanResult.swift; sourceTree = "<group>"; };
 		0FF100040000000000000000 /* UserProfile.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UserProfile.swift; sourceTree = "<group>"; };
 		0FF100060000000000000000 /* ScanViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScanViewModel.swift; sourceTree = "<group>"; };
-		0FF1FF040000000000000000 /* UnifiedScanViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UnifiedScanViewModel.swift; sourceTree = "<group>"; };
-		0FF1FF050000000000000000 /* UnifiedScanView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UnifiedScanView.swift; sourceTree = "<group>"; };
 		0FF100070000000000000000 /* AppConfig.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppConfig.swift; sourceTree = "<group>"; };
 		0FF100080000000000000000 /* ArtStyleClassifierService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ArtStyleClassifierService.swift; sourceTree = "<group>"; };
 		0FF100090000000000000000 /* AuthService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthService.swift; sourceTree = "<group>"; };
@@ -117,6 +118,9 @@
 		0FF1004F0000000000000000 /* CollectionView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CollectionView.swift; sourceTree = "<group>"; };
 		0FF100500000000000000000 /* MemoriesView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MemoriesView.swift; sourceTree = "<group>"; };
 		0FF100510000000000000000 /* MemoryDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MemoryDetailView.swift; sourceTree = "<group>"; };
+		0FF1FF040000000000000000 /* UnifiedScanViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UnifiedScanViewModel.swift; sourceTree = "<group>"; };
+		0FF1FF050000000000000000 /* UnifiedScanView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UnifiedScanView.swift; sourceTree = "<group>"; };
+		0FF1FF060000000000000000 /* Secrets.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Secrets.plist; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -150,6 +154,7 @@
 		0F2771FF2FDA58C400DEF486 /* MuseumMate */ = {
 			isa = PBXGroup;
 			children = (
+				0F2F3BF12FE1853700E87EB6 /* ArtistClassifier.mlproj */,
 				0F2772002FDA58C400DEF486 /* MuseumMateApp.swift */,
 				0F2772022FDA58C400DEF486 /* ContentView.swift */,
 				0F27721B2FDA5B0000DEF486 /* Models */,
@@ -160,6 +165,7 @@
 				0F2772282FDA5B0000DEF486 /* Resources */,
 				0F2772042FDA58C800DEF486 /* Assets.xcassets */,
 				0F2772102FDA5B0000DEF486 /* Info.plist */,
+				0FF1FF060000000000000000 /* Secrets.plist */,
 				0F2772062FDA58C800DEF486 /* Preview Content */,
 			);
 			path = MuseumMate;
@@ -413,9 +419,11 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				0F2F3BF22FE1853700E87EB6 /* ArtistClassifier.mlproj in Resources */,
 				0F2772082FDA58C800DEF486 /* Preview Assets.xcassets in Resources */,
 				0F2772052FDA58C800DEF486 /* Assets.xcassets in Resources */,
 				0F2772162FDA5B0000DEF486 /* PrivacyInfo.xcprivacy in Resources */,
+				0FF2FF060000000000000000 /* Secrets.plist in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

@@ -19,14 +19,34 @@
 import UIKit
 
 final class VisionService {
+    // Stage 2 — reasoning + identification (DeepSeek V4 Pro, text only).
     private let endpoint = "https://api.deepseek.com/chat/completions"
     private let model = "deepseek-v4-pro"
-
     private var apiKey: String { AppConfig.deepSeekAPIKey }
 
-    private let systemPrompt = """
-    You are an expert art historian. Identify the artwork in the image. Respond ONLY with \
-    valid JSON — no markdown, no extra text:
+    // Stage 1 — vision analysis (Qwen-VL). DeepSeek cannot read images, so a
+    // vision model acts as the "eyes": it describes the photo in detail, then
+    // DeepSeek reasons over that description to identify the work.
+    // Provider   : Alibaba DashScope (OpenAI-compatible mode)
+    // Endpoint   : dashscope-intl.aliyuncs.com/compatible-mode/v1
+    private let qwenEndpoint = "https://dashscope-intl.aliyuncs.com/compatible-mode/v1/chat/completions"
+    private let qwenModel = "qwen-vl-max"
+    private var qwenAPIKey: String { AppConfig.qwenAPIKey }
+
+    /// Stage 1 prompt: ask Qwen to describe the artwork and guess its identity.
+    private let qwenVisionPrompt = """
+    You are an expert art historian and visual analyst. Examine this image of an artwork \
+    and describe it in rich, concrete detail: the subject and any figures, the composition, \
+    colours, lighting, brushwork and technique, mood, and the apparent art style and period. \
+    If you recognise the specific painting and its artist, state them explicitly together with \
+    your confidence. Your description will be used to identify the exact artwork, so be \
+    specific and thorough.
+    """
+
+    /// Stage 2 prompt: DeepSeek identifies the work from Qwen's visual analysis.
+    private let reasoningSystemPrompt = """
+    You are an expert art historian. Based on the visual analysis provided by the user, \
+    identify the specific artwork. Respond ONLY with valid JSON — no markdown, no extra text:
     {
       "title": "...",
       "artist": "...",
@@ -45,29 +65,27 @@ final class VisionService {
 
     // MARK: - Public API
 
+    /// Two-stage pipeline: Qwen-VL describes the image (vision), then DeepSeek
+    /// reasons over that description to identify the work and write the catalog
+    /// entry. Photo → Qwen → visual description → DeepSeek → Artwork JSON.
     func identifyArtwork(imageBase64: String) async throws -> Artwork {
-        guard AppConfig.hasValidAPIKey else { throw VisionError.missingAPIKey }
-        guard let url = URL(string: endpoint) else { throw VisionError.invalidURL }
-
-        let request = try makeRequest(url: url, imageBase64: imageBase64)
-
-        let (data, response): (Data, URLResponse)
-        do {
-            (data, response) = try await URLSession.shared.data(for: request)
-        } catch {
-            throw VisionError.network(error.localizedDescription)
+        guard AppConfig.hasValidQwenKey, AppConfig.hasValidAPIKey else {
+            throw VisionError.missingAPIKey
         }
 
-        guard let http = response as? HTTPURLResponse else {
-            throw VisionError.invalidResponse
-        }
-        guard (200...299).contains(http.statusCode) else {
-            if http.statusCode == 429 { throw VisionError.rateLimited }
-            let body = String(data: data, encoding: .utf8) ?? ""
-            throw VisionError.httpError(http.statusCode, body)
-        }
+        // Stage 1 — vision: Qwen-VL turns the photo into a detailed description.
+        let analysis = try await analyzeImageWithQwen(imageBase64: imageBase64)
 
-        let content = try extractContent(from: data)
+        // Stage 2 — reasoning: DeepSeek identifies the artwork from the analysis.
+        let user = """
+        Visual analysis of the artwork:
+        \(analysis)
+
+        Identify this artwork and respond with the JSON.
+        """
+        let content = try await completeText(
+            system: reasoningSystemPrompt, user: user, maxTokens: 1200, temperature: 0.3
+        )
         return try decodeArtwork(from: content)
     }
 
@@ -79,37 +97,52 @@ final class VisionService {
         image.jpegData(compressionQuality: quality)?.base64EncodedString()
     }
 
-    // MARK: - Request building
+    // MARK: - Stage 1: Qwen-VL vision analysis
 
-    private func makeRequest(url: URL, imageBase64: String) throws -> URLRequest {
+    /// Sends the photo to Qwen-VL and returns a rich textual description that
+    /// the DeepSeek stage then reasons over. Uses the same base64 image pipeline.
+    private func analyzeImageWithQwen(imageBase64: String) async throws -> String {
+        guard let url = URL(string: qwenEndpoint) else { throw VisionError.invalidURL }
+
         var request = URLRequest(url: url)
         request.httpMethod = "POST"
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
-        request.setValue("Bearer \(apiKey)", forHTTPHeaderField: "Authorization")
+        request.setValue("Bearer \(qwenAPIKey)", forHTTPHeaderField: "Authorization")
         request.timeoutInterval = 60
 
         let userContent: [[String: Any]] = [
-            ["type": "text", "text": "Identify this artwork."],
+            ["type": "text", "text": qwenVisionPrompt],
             ["type": "image_url",
              "image_url": ["url": "data:image/jpeg;base64,\(imageBase64)"]]
         ]
         let messages: [[String: Any]] = [
-            ["role": "system", "content": systemPrompt],
             ["role": "user", "content": userContent]
         ]
         let body: [String: Any] = [
-            "model": model,
-            "max_tokens": 900,
-            "temperature": 0.3,
+            "model": qwenModel,
+            "max_tokens": 700,
+            "temperature": 0.2,
             "messages": messages
         ]
-
         do {
             request.httpBody = try JSONSerialization.data(withJSONObject: body)
         } catch {
             throw VisionError.encodingFailed
         }
-        return request
+
+        let (data, response): (Data, URLResponse)
+        do {
+            (data, response) = try await URLSession.shared.data(for: request)
+        } catch {
+            throw VisionError.network(error.localizedDescription)
+        }
+        guard let http = response as? HTTPURLResponse else { throw VisionError.invalidResponse }
+        guard (200...299).contains(http.statusCode) else {
+            if http.statusCode == 429 { throw VisionError.rateLimited }
+            let bodyText = String(data: data, encoding: .utf8) ?? ""
+            throw VisionError.httpError(http.statusCode, bodyText)
+        }
+        return try extractContent(from: data)
     }
 
     // MARK: - Response parsing
@@ -302,7 +335,7 @@ enum VisionError: LocalizedError {
     var errorDescription: String? {
         switch self {
         case .missingAPIKey:
-            return "Add your DeepSeek API key in Secrets.plist to identify artworks."
+            return "Add your Qwen and DeepSeek API keys in Secrets.plist to identify artworks."
         case .invalidURL:
             return "The identification service address is invalid."
         case .invalidResponse:

@@ -42,7 +42,7 @@ final class UnifiedScanViewModel: ObservableObject {
 
     // MARK: - Live camera
 
-    @Published var detectedStyle = "—"
+    @Published var detectedArtist = "—"
     @Published var styleConfidence: Double = 0
     @Published var permissionDenied = false
     @Published var cameraIsRunning = false
@@ -65,7 +65,7 @@ final class UnifiedScanViewModel: ObservableObject {
     // MARK: - Collaborators
 
     let camera = CameraService()
-    let classifier = ArtStyleClassifierService()
+    let classifier = ArtistClassifierService()
     let recents = RecentPhotosLoader()
     private let vision = VisionService()
 
@@ -128,7 +128,7 @@ final class UnifiedScanViewModel: ObservableObject {
         guard !isProcessingFrame, !isScanning else { return }
         isProcessingFrame = true
         await classifier.classify(cgImage: cgImage)   // runs off the main actor
-        detectedStyle = classifier.detectedStyle == "unknown" ? "—" : classifier.detectedStyle
+        detectedArtist = classifier.detectedArtist == "unknown" ? "—" : classifier.detectedArtist
         styleConfidence = classifier.confidence
         isProcessingFrame = false
     }
@@ -162,7 +162,7 @@ final class UnifiedScanViewModel: ObservableObject {
         if let cgImage = image.cgImage {
             await classifier.classify(cgImage: cgImage)
         }
-        let localStyle = classifier.detectedStyle
+        let localArtist = classifier.detectedArtist
         let localConfidence = classifier.confidence
 
         // Persist the image to disk (full + thumbnail).
@@ -187,7 +187,7 @@ final class UnifiedScanViewModel: ObservableObject {
             date: Date(),
             imageFileName: saved.image ?? "",
             thumbnailFileName: saved.thumbnail,
-            localStyle: localStyle,
+            localArtist: localArtist,
             localConfidence: localConfidence,
             artwork: artwork
         )

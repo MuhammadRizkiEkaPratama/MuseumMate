@@ -262,7 +262,7 @@ struct CollectionView: View {
             results = results.filter { result in
                 result.displayTitle.lowercased().contains(query)
                     || (result.artwork?.artist.lowercased().contains(query) ?? false)
-                    || result.localStyle.lowercased().contains(query)
+                    || result.localArtist.lowercased().contains(query)
             }
         }
         return results
@@ -277,7 +277,7 @@ struct CollectionView: View {
 
 private struct CollectionRow: View {
     let result: ScanResult
-    private var accent: Color { ArtStyleLibrary.accentColor(for: result.displayStyle) }
+    private var accent: Color { ArtistLibrary.accentColor(for: result.displayStyle) }
 
     var body: some View {
         HStack(spacing: 14) {

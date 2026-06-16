@@ -33,10 +33,10 @@ final class ScanViewModel: ObservableObject {
     @Published var phase: ScanPhase = .idle
     @Published var selectedImage: UIImage?
     @Published var currentResult: ScanResult?
-    @Published var localStylePreview: String?
+    @Published var localArtistPreview: String?
     @Published var localConfidencePreview: Double = 0
 
-    let classifier = ArtStyleClassifierService()
+    let classifier = ArtistClassifierService()
     private let vision = VisionService()
 
     var isScanning: Bool {
@@ -51,9 +51,9 @@ final class ScanViewModel: ObservableObject {
         if let cgImage = image.cgImage {
             await classifier.classify(cgImage: cgImage)
         }
-        let localStyle = classifier.detectedStyle
+        let localArtist = classifier.detectedArtist
         let localConfidence = classifier.confidence
-        localStylePreview = localStyle
+        localArtistPreview = localArtist
         localConfidencePreview = localConfidence
 
         // Persist the image to disk (full + thumbnail).
@@ -78,7 +78,7 @@ final class ScanViewModel: ObservableObject {
             date: Date(),
             imageFileName: saved.image ?? "",
             thumbnailFileName: saved.thumbnail,
-            localStyle: localStyle,
+            localArtist: localArtist,
             localConfidence: localConfidence,
             artwork: artwork
         )
@@ -98,7 +98,7 @@ final class ScanViewModel: ObservableObject {
         phase = .idle
         selectedImage = nil
         currentResult = nil
-        localStylePreview = nil
+        localArtistPreview = nil
         localConfidencePreview = 0
     }
 }
