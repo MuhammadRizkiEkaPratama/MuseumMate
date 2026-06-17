@@ -383,3 +383,154 @@ Notes       : Root causes identified:
               MetObject.fallback static added (distinct from preview which
               has empty image URLs).
 ```
+
+```
+Ticket #015
+Assigned to : vision-integration
+Phase       : Phase 7B (AI Pipeline)
+Task        : Restructure AI pipeline: Qwen-VL-Plus (name ID) → ArtworkDetailService
+              (DeepSeek V4 Pro, full catalog) as 3-stage scan pipeline.
+Status      : Completed
+Iterations  : 1
+Collaboration: Handed off to ui-ux (ArtworkDetailView Part 5) and qa
+Notes       : Stage 1 — Core ML (ArtistClassifier offline, unchanged).
+              Stage 2 — Qwen-VL-Plus: model changed from qwen-vl-max; prompt
+              reduced to minimal JSON {title, artist, confidence}; max_tokens
+              200; QuickIdentification struct introduced.
+              Stage 3 — DeepSeek V4 Pro via new ArtworkDetailService.swift:
+              generateFullDetail(title:artist:) builds full Artwork from just
+              the two fields; prompt covers all 22 Artwork fields including
+              new lovePoems[], artistStory, shortHistory, category, theme,
+              genre, material, exhibitionSince, etc.; max_tokens 1200,
+              temperature 0.7.
+              UnifiedScanViewModel.ScanPhase gains .gatheringDetails case.
+              Label: "Detecting artist…" / "Identifying artwork…" /
+              "Gathering details…".
+```
+
+```
+Ticket #016
+Assigned to : architect
+Phase       : Phase 7B (Models)
+Task        : Extend Artwork.swift with 11 new catalog fields.
+Status      : Completed
+Iterations  : 1
+Collaboration: Handed off to vision-integration (ArtworkDetailService) and ui-ux
+Notes       : New fields: artistNationality, exhibitionLocation, exhibitionSince,
+              category, artStyle, creationTime, material, theme, genre,
+              shortHistory, lovePoems [String], artistStory.
+              CodingKeys: snake_case to match DeepSeek JSON keys.
+              Custom init(from:) extended with try? decode for all new fields
+              — backward compatible with old UserDefaults data.
+              Memberwise init gains all new params with default ""/[].
+              preview updated with realistic values for all new fields.
+```
+
+```
+Ticket #017
+Assigned to : ui-ux
+Phase       : Phase 7B (Dashboard)
+Task        : Fix DashboardView paintingImage — nested fallback AsyncImage,
+              explicit phase handling, print logging.
+Status      : Completed
+Iterations  : 1
+Collaboration: Handed off to qa
+Notes       : .empty → SkeletonView (was already there).
+              .success → crossfade opacity transition + print("[Dashboard]
+              painting loaded: \(title), imageURL: \(url)").
+              .failure → nested AsyncImage using primaryImage URL (not
+              primaryImageSmall); if that also fails → artworkUnavailablePlaceholder
+              (gold photo.artframe icon + "Artwork unavailable" caption on
+              appSurface background). @unknown default cases added in both
+              AsyncImage closures for forward compatibility.
+```
+
+```
+Ticket #018
+Assigned to : ui-ux
+Phase       : Phase 7C (Artist Discovery)
+Task        : New Tab 4 — Artist Discovery: ArtistProfile model,
+              ArtistImageService (Wikipedia), ArtistInfoService (DeepSeek),
+              ArtistDiscoveryViewModel, ArtistDiscoveryView.
+Status      : Completed
+Iterations  : 1
+Collaboration: Handed off to ui-ux (ArtworkDetailView portrait integration)
+Notes       : ArtistImageService hits Wikipedia REST API /page/summary/{name}
+              to get thumbnail.source. Requires ATS entries for
+              en.wikipedia.org and upload.wikimedia.org (added to Info.plist).
+              User-Agent header set to "MuseumMate/1.0" as Wikipedia policy
+              requires.
+              ArtistInfoService uses DeepSeek V4 Pro for rich 3-paragraph
+              bio + famous works JSON.
+              ArtistDiscoveryView: 2-column LazyVGrid of 12 artist cards with
+              Wikipedia portrait AsyncImage + name/movement/dates; tap opens
+              ArtistBioSheet (NavigationStack sheet with tall portrait hero
+              + biography + notable works).
+              AppTab.memories → AppTab.artists; ContentView and previews
+              updated accordingly.
+```
+
+```
+Ticket #019
+Assigned to : ui-ux
+Phase       : Phase 7D (Collection)
+Task        : Redesign CollectionView as "Art Pieces" 2-column gallery grid.
+Status      : Completed
+Iterations  : 1
+Collaboration: Handed off to qa
+Notes       : Replaced List with LazyVGrid (2 columns, 14pt spacing).
+              ArtPieceCard: 160pt image area + info strip; ClipShape on
+              RoundedRectangle(16); long-press contextMenu for Favorite and
+              Delete (replaces swipe actions, more discoverable on a grid).
+              Stacked serif "Art / Pieces" header in top-left; total + saved
+              + artists stat pills; mode switcher (All/Favorites) with gold
+              underline unchanged; filter chips unchanged.
+              navigationBarHidden(true) — header is inline with content.
+```
+
+```
+Ticket #020
+Assigned to : ui-ux
+Phase       : Phase 7E (ArtworkDetailView)
+Task        : Redesign ArtworkDetailView — tall hero, artist portrait, metadata
+              grid, expandable Quick History, love poems, artist story.
+Status      : Completed
+Iterations  : 1
+Collaboration: Handed off to qa
+Notes       : Hero height = UIScreen.main.bounds.height * 0.55.
+              Glass action buttons (.ultraThinMaterial circle) overlay hero.
+              ArtistImageService called in .task to fetch Wikipedia portrait
+              (shown as 54pt circle inset at bottom-left of hero and in
+              artistStorySection).
+              Metadata LazyVGrid 2-col: Year, Medium, Style, Collection fields.
+              shortHistorySection: expandable toggle row (chevron up/down,
+              .museumSpring animation).
+              lovePoemsSection: numbered serif italic lines replacing old single
+              romanticLine (romanticLineSection still shown if lovePoems is
+              empty for backward compat).
+              artistStorySection: portrait circle + body text.
+              accent color from ArtistLibrary throughout (was fixed appAccent).
+```
+
+```
+Ticket #021
+Assigned to : ui-ux
+Phase       : Phase 7F (Navigation + Profile)
+Task        : Custom floating tab bar (CustomTabBar.swift), ProfileView
+              birthday DatePicker, ATS exceptions for Wikipedia.
+Status      : Completed
+Iterations  : 1
+Collaboration: Handed off to qa for full regression test
+Notes       : CustomTabBar: floating pill (RoundedRectangle cornerRadius 28),
+              gold highlight circle slides under active icon (offset animation,
+              .museumSpring); PressableButtonStyle per tap; Reduce Motion
+              disables animation; padding(.horizontal, 20) + padding(.bottom, 8).
+              ContentView rewritten: ZStack(alignment: .bottom) with Group
+              switch/case + .padding(.bottom, 90) to push content above bar;
+              no UITabBarAppearance config needed. Haptic on tab change.
+              ProfileView birthday row: tapable "Birthday" infoRow toggles
+              inline DatePicker(.wheel) with "Done" button; saves to
+              UserDefaults key "museummate_user_birthdate" in onChange handler.
+              Info.plist: added en.wikipedia.org and upload.wikimedia.org
+              ATS exception domains (HTTPS only, TLSv1.2, NSIncludesSubdomains).
+```

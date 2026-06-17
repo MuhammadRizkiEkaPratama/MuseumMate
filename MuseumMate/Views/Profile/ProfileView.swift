@@ -15,6 +15,12 @@ struct ProfileView: View {
     @EnvironmentObject private var favoritesStore: FavoritesStore
 
     @State private var showSignOutAlert = false
+    @State private var birthdate: Date = {
+        (UserDefaults.standard.object(forKey: "museummate_user_birthdate") as? Date)
+            ?? Calendar.current.date(from: DateComponents(year: 1990, month: 1, day: 1))
+            ?? Date()
+    }()
+    @State private var showBirthdatePicker = false
 
     var body: some View {
         NavigationStack {
@@ -121,11 +127,86 @@ struct ProfileView: View {
                 rowDivider
                 infoRow(icon: "envelope", title: "Email", value: auth.currentUserEmail.isEmpty ? "—" : auth.currentUserEmail)
                 rowDivider
+                birthdateRow
+                rowDivider
                 // TODO: Firebase — wire real account management in Phase 7.
                 infoRow(icon: "gearshape", title: "Manage Account", value: "Soon")
             }
             .card(padding: 16)
+
+            if showBirthdatePicker {
+                VStack(alignment: .leading, spacing: 8) {
+                    DatePicker(
+                        "Birthday",
+                        selection: $birthdate,
+                        in: ...Date(),
+                        displayedComponents: .date
+                    )
+                    .datePickerStyle(.wheel)
+                    .labelsHidden()
+                    .tint(Color.appAccent)
+                    .onChange(of: birthdate) { newDate in
+                        UserDefaults.standard.set(newDate, forKey: "museummate_user_birthdate")
+                    }
+
+                    Button {
+                        withAnimation(.museumSpring) { showBirthdatePicker = false }
+                    } label: {
+                        Text("Done")
+                            .font(.subheadline.weight(.semibold))
+                            .foregroundStyle(Color.appBackground)
+                            .frame(maxWidth: .infinity)
+                            .frame(height: 44)
+                            .background(
+                                RoundedRectangle(cornerRadius: 12, style: .continuous)
+                                    .fill(Color.appAccent)
+                            )
+                    }
+                    .buttonStyle(.pressable)
+                }
+                .padding(16)
+                .background(
+                    RoundedRectangle(cornerRadius: 18, style: .continuous)
+                        .fill(Color.appSurface)
+                )
+                .transition(.opacity.combined(with: .move(edge: .top)))
+            }
         }
+    }
+
+    private var birthdateRow: some View {
+        Button {
+            Haptics.tap()
+            withAnimation(.museumSpring) { showBirthdatePicker.toggle() }
+        } label: {
+            HStack(spacing: 14) {
+                Image(systemName: "gift")
+                    .font(.subheadline)
+                    .foregroundStyle(Color.appAccent)
+                    .frame(width: 22)
+                Text("Birthday")
+                    .font(.subheadline)
+                    .foregroundStyle(Color.appTextPrimary)
+                Spacer()
+                Text(birthdateFormatted)
+                    .font(.subheadline)
+                    .foregroundStyle(Color.appTextMuted)
+                    .lineLimit(1)
+                Image(systemName: showBirthdatePicker ? "chevron.up" : "chevron.down")
+                    .font(.caption2)
+                    .foregroundStyle(Color.appTextMuted)
+            }
+            .padding(.vertical, 12)
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+    }
+
+    private var birthdateFormatted: String {
+        let f = DateFormatter()
+        f.dateStyle = .medium
+        f.timeStyle = .none
+        return f.string(from: birthdate)
     }
 
     // MARK: - App
