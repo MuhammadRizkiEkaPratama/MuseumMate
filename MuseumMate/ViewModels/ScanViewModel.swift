@@ -38,6 +38,7 @@ final class ScanViewModel: ObservableObject {
 
     let classifier = ArtistClassifierService()
     private let vision = VisionService()
+    private let artworkDetail = ArtworkDetailService()
 
     var isScanning: Bool {
         phase == .detectingStyle || phase == .identifyingArtwork
@@ -67,7 +68,10 @@ final class ScanViewModel: ObservableObject {
             guard let base64 = VisionService.base64(from: image) else {
                 throw VisionError.encodingFailed
             }
-            artwork = try await vision.identifyArtwork(imageBase64: base64)
+            let quickID = try await vision.quickIdentify(imageBase64: base64)
+            artwork = try await artworkDetail.generateFullDetail(
+                title: quickID.title, artist: quickID.artist
+            )
         } catch {
             failureMessage = (error as? LocalizedError)?.errorDescription
                 ?? "Could not reach the identification service. Style detected offline."
