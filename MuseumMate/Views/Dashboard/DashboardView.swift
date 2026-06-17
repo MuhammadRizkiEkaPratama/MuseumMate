@@ -96,17 +96,43 @@ struct DashboardView: View {
     @ViewBuilder
     private var paintingImage: some View {
         if let painting = viewModel.dailyPainting {
-            AsyncImage(url: URL(string: painting.primaryImageSmall.isEmpty ? painting.primaryImage : painting.primaryImageSmall)) { phase in
+            let preferredURL = URL(string: painting.primaryImageSmall.isEmpty
+                ? painting.primaryImage
+                : painting.primaryImageSmall)
+            let fallbackURL = URL(string: painting.primaryImage)
+
+            AsyncImage(url: preferredURL) { phase in
                 switch phase {
+                case .empty:
+                    SkeletonView(cornerRadius: 20)
+
                 case .success(let img):
                     img.resizable().scaledToFill()
+                        .transition(.opacity.animation(.easeIn(duration: 0.3)))
+                        .onAppear {
+                            print("[Dashboard] painting loaded: \(painting.title), imageURL: \(painting.primaryImageSmall)")
+                        }
+
                 case .failure:
-                    Color.appSurface.overlay(
-                        Image(systemName: "photo.artframe")
-                            .font(.title)
-                            .foregroundStyle(Color.appTextMuted)
-                    )
-                default:
+                    // Primary URL failed — try the full-size fallback.
+                    AsyncImage(url: fallbackURL) { fallbackPhase in
+                        switch fallbackPhase {
+                        case .empty:
+                            SkeletonView(cornerRadius: 20)
+                        case .success(let img):
+                            img.resizable().scaledToFill()
+                                .transition(.opacity.animation(.easeIn(duration: 0.3)))
+                                .onAppear {
+                                    print("[Dashboard] painting loaded via fallback: \(painting.title), imageURL: \(painting.primaryImage)")
+                                }
+                        case .failure:
+                            artworkUnavailablePlaceholder
+                        @unknown default:
+                            artworkUnavailablePlaceholder
+                        }
+                    }
+
+                @unknown default:
                     SkeletonView(cornerRadius: 20)
                 }
             }
@@ -114,6 +140,20 @@ struct DashboardView: View {
         } else {
             SkeletonView(cornerRadius: 20)
         }
+    }
+
+    private var artworkUnavailablePlaceholder: some View {
+        Color.appSurface
+            .overlay(
+                VStack(spacing: 8) {
+                    Image(systemName: "photo.artframe")
+                        .font(.system(size: 32, weight: .light))
+                        .foregroundStyle(Color.appAccent)
+                    Text("Artwork unavailable")
+                        .font(.caption)
+                        .foregroundStyle(Color.appTextMuted)
+                }
+            )
     }
 
     @ViewBuilder
