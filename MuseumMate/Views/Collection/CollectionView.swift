@@ -2,7 +2,8 @@
 //  CollectionView.swift
 //  MuseumMate
 //
-//  History + Favorites merged into one searchable, filterable collection.
+//  "Art Pieces" — a 2-column gallery grid of all scanned artworks.
+//  Filter by All / Favorites and search by title or artist.
 //
 
 import SwiftUI
@@ -13,8 +14,9 @@ struct CollectionView: View {
     @EnvironmentObject private var historyStore: ScanHistoryStore
     @EnvironmentObject private var favoritesStore: FavoritesStore
 
-    enum Mode: CaseIterable { case all, favorites
-        var title: String { self == .all ? "All Scans" : "Favorites" }
+    enum Mode: CaseIterable {
+        case all, favorites
+        var title: String { self == .all ? "All" : "Favorites" }
     }
 
     @State private var mode: Mode = .all
@@ -22,28 +24,49 @@ struct CollectionView: View {
     @State private var selectedStyle: String?
     @State private var pendingDelete: ScanResult?
 
+    private let columns = [
+        GridItem(.flexible(), spacing: 14),
+        GridItem(.flexible(), spacing: 14)
+    ]
+
     var body: some View {
         NavigationStack {
             ZStack {
                 Color.appBackground.ignoresSafeArea()
 
-                VStack(spacing: 16) {
-                    statPills
+                VStack(spacing: 0) {
+                    // Stacked serif header
+                    pageHeader
+                        .padding(.horizontal, 24)
+                        .padding(.top, 8)
+                        .padding(.bottom, 16)
+
+                    // Stats + mode switcher
+                    statRow
+                        .padding(.horizontal, 24)
+                        .padding(.bottom, 14)
+
                     modeSwitcher
+                        .padding(.bottom, 12)
+
+                    // Search + filter chips
                     searchBar
+                        .padding(.horizontal, 24)
+                        .padding(.bottom, 10)
+
                     styleChips
-                    content
+                        .padding(.bottom, 12)
+
+                    // Grid content
+                    gridContent
                 }
-                .padding(.top, 8)
             }
-            .navigationTitle("My Collection")
-            .toolbarBackground(Color.appBackground, for: .navigationBar)
-            .toolbarColorScheme(.dark, for: .navigationBar)
+            .navigationBarHidden(true)
             .confirmationDialog("Delete this scan?", isPresented: deleteBinding, titleVisibility: .visible) {
                 Button("Delete", role: .destructive) {
-                    if let pendingDelete {
+                    if let item = pendingDelete {
                         Haptics.impact(.medium)
-                        historyStore.delete(pendingDelete)
+                        historyStore.delete(item)
                     }
                     pendingDelete = nil
                 }
@@ -54,30 +77,62 @@ struct CollectionView: View {
         }
     }
 
-    // MARK: - Stat pills
+    // MARK: - Header
 
-    private var statPills: some View {
-        HStack(spacing: 12) {
-            statPill(value: historyStore.scans.count, label: "Artworks Scanned")
-            statPill(value: favoritesStore.count, label: "Favorites")
+    private var pageHeader: some View {
+        HStack(alignment: .top) {
+            VStack(alignment: .leading, spacing: 2) {
+                Text("Art")
+                    .font(.system(size: 36, design: .serif).weight(.light))
+                    .foregroundStyle(Color.appTextPrimary)
+                Text("Pieces")
+                    .font(.system(size: 36, design: .serif).weight(.regular))
+                    .foregroundStyle(Color.appAccent)
+            }
+            Spacer()
+            VStack(alignment: .trailing, spacing: 2) {
+                Text("\(historyStore.scans.count)")
+                    .font(.system(.title, design: .serif))
+                    .foregroundStyle(Color.appAccent)
+                Text("scanned")
+                    .font(.caption2)
+                    .foregroundStyle(Color.appTextMuted)
+            }
         }
-        .padding(.horizontal, 24)
+    }
+
+    // MARK: - Stat row
+
+    private var statRow: some View {
+        HStack(spacing: 12) {
+            statPill(value: historyStore.scans.count, label: "Total")
+            statPill(value: favoritesStore.count, label: "Saved")
+            statPill(value: historyStore.uniqueStyleCount, label: "Artists")
+        }
     }
 
     private func statPill(value: Int, label: String) -> some View {
-        VStack(spacing: 4) {
+        VStack(spacing: 3) {
             Text("\(value)")
-                .font(.system(.title2, design: .serif))
+                .font(.system(.title3, design: .serif))
                 .foregroundStyle(Color.appAccent)
             Text(label)
                 .font(.caption2)
                 .foregroundStyle(Color.appTextMuted)
         }
         .frame(maxWidth: .infinity)
-        .card(padding: 14)
+        .padding(.vertical, 10)
+        .background(
+            RoundedRectangle(cornerRadius: 12, style: .continuous)
+                .fill(Color.appSurface)
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: 12, style: .continuous)
+                .strokeBorder(Color.white.opacity(0.06), lineWidth: 0.5)
+        )
     }
 
-    // MARK: - Mode switcher (sliding gold underline)
+    // MARK: - Mode switcher
 
     private var modeSwitcher: some View {
         HStack(spacing: 0) {
@@ -118,23 +173,26 @@ struct CollectionView: View {
         HStack(spacing: 10) {
             Image(systemName: "magnifyingglass")
                 .foregroundStyle(Color.appTextMuted)
-            TextField("", text: $searchText, prompt: Text("Search title, artist, style").foregroundColor(.appTextMuted))
+                .font(.subheadline)
+            TextField("", text: $searchText,
+                      prompt: Text("Search title or artist").foregroundColor(.appTextMuted))
                 .font(.subheadline)
                 .foregroundStyle(Color.appTextPrimary)
                 .tint(Color.appAccent)
                 .autocorrectionDisabled()
             if !searchText.isEmpty {
-                Button {
-                    searchText = ""
-                } label: {
-                    Image(systemName: "xmark.circle.fill").foregroundStyle(Color.appTextMuted)
+                Button { searchText = "" } label: {
+                    Image(systemName: "xmark.circle.fill")
+                        .foregroundStyle(Color.appTextMuted)
                 }
             }
         }
         .padding(.horizontal, 14)
         .frame(height: 44)
-        .background(RoundedRectangle(cornerRadius: 12, style: .continuous).fill(Color.appSurface))
-        .padding(.horizontal, 24)
+        .background(
+            RoundedRectangle(cornerRadius: 12, style: .continuous)
+                .fill(Color.appSurface)
+        )
     }
 
     // MARK: - Style chips
@@ -147,7 +205,9 @@ struct CollectionView: View {
                 HStack(spacing: 8) {
                     chip(title: "All", active: selectedStyle == nil) { selectedStyle = nil }
                     ForEach(styles, id: \.self) { style in
-                        chip(title: style, active: selectedStyle == style) { selectedStyle = style }
+                        chip(title: style, active: selectedStyle == style) {
+                            selectedStyle = style
+                        }
                     }
                 }
                 .padding(.horizontal, 24)
@@ -165,70 +225,63 @@ struct CollectionView: View {
                 .foregroundStyle(active ? Color.appBackground : Color.appTextSecondary)
                 .padding(.horizontal, 14)
                 .padding(.vertical, 7)
-                .background(
-                    Capsule().fill(active ? Color.appAccent : Color.appSurface)
-                )
-                .overlay(
-                    Capsule().strokeBorder(Color.white.opacity(active ? 0 : 0.06), lineWidth: 0.5)
-                )
+                .background(Capsule().fill(active ? Color.appAccent : Color.appSurface))
+                .overlay(Capsule().strokeBorder(Color.white.opacity(active ? 0 : 0.06), lineWidth: 0.5))
         }
         .buttonStyle(.pressable)
     }
 
-    // MARK: - Content
+    // MARK: - Grid content
 
     @ViewBuilder
-    private var content: some View {
+    private var gridContent: some View {
         let results = filteredResults
         if results.isEmpty {
             emptyState
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
         } else {
-            List {
-                ForEach(Array(results.enumerated()), id: \.element.id) { index, result in
-                    row(for: result)
-                        .fadeSlideIn(delay: Double(min(index, 8)) * 0.04)
+            ScrollView(showsIndicators: false) {
+                LazyVGrid(columns: columns, spacing: 14) {
+                    ForEach(Array(results.enumerated()), id: \.element.id) { index, result in
+                        NavigationLink {
+                            ArtworkDetailView(result: result)
+                        } label: {
+                            ArtPieceCard(result: result)
+                                .fadeSlideIn(delay: Double(min(index, 8)) * 0.04)
+                                .contextMenu {
+                                    Button {
+                                        Haptics.impact(.light)
+                                        historyStore.toggleFavorite(result)
+                                    } label: {
+                                        Label(
+                                            result.isFavorite ? "Remove from Favorites" : "Add to Favorites",
+                                            systemImage: result.isFavorite ? "heart.slash" : "heart"
+                                        )
+                                    }
+                                    Button(role: .destructive) {
+                                        pendingDelete = result
+                                    } label: {
+                                        Label("Delete", systemImage: "trash")
+                                    }
+                                }
+                        }
+                        .buttonStyle(.plain)
+                    }
                 }
+                .padding(.horizontal, 24)
+                .padding(.bottom, 32)
             }
-            .listStyle(.plain)
-            .scrollContentBackground(.hidden)
-            .background(Color.appBackground)
-        }
-    }
-
-    private func row(for result: ScanResult) -> some View {
-        ZStack {
-            NavigationLink {
-                ArtworkDetailView(result: result)
-            } label: { EmptyView() }
-            .opacity(0)
-
-            CollectionRow(result: result)
-        }
-        .listRowBackground(Color.appBackground)
-        .listRowSeparatorTint(Color.white.opacity(0.06))
-        .listRowInsets(EdgeInsets(top: 8, leading: 24, bottom: 8, trailing: 24))
-        .swipeActions(edge: .trailing, allowsFullSwipe: false) {
-            Button(role: .destructive) { pendingDelete = result } label: {
-                Label("Delete", systemImage: "trash")
-            }
-        }
-        .swipeActions(edge: .leading, allowsFullSwipe: true) {
-            Button {
-                Haptics.impact(.light)
-                historyStore.toggleFavorite(result)
-            } label: {
-                Label("Favorite", systemImage: result.isFavorite ? "heart.slash" : "heart")
-            }
-            .tint(Color.appAccent)
         }
     }
 
     @ViewBuilder
     private var emptyState: some View {
         if !searchText.isEmpty {
-            EmptyStateView(symbol: "magnifyingglass", message: "No artworks match “\(searchText)”.")
+            EmptyStateView(symbol: "magnifyingglass",
+                           message: "No artworks match "\(searchText)".")
         } else if mode == .favorites {
-            EmptyStateView(symbol: "heart", message: "Save artworks that move you.")
+            EmptyStateView(symbol: "heart",
+                           message: "Save artworks that move you.")
         } else {
             EmptyStateView(
                 symbol: "photo.artframe",
@@ -273,60 +326,60 @@ struct CollectionView: View {
     }
 }
 
-// MARK: - Row
+// MARK: - Art Piece Card (gallery arch card)
 
-private struct CollectionRow: View {
+private struct ArtPieceCard: View {
     let result: ScanResult
-    private var accent: Color { ArtistLibrary.accentColor(for: result.displayStyle) }
+    private var accent: Color { ArtistLibrary.accentColor(for: result.localArtist) }
 
     var body: some View {
-        HStack(spacing: 14) {
-            ScanThumbnail(result: result, cornerRadius: 10)
-                .frame(width: 56, height: 56)
+        VStack(spacing: 0) {
+            // Artwork image — fills top 65% of card
+            ScanThumbnail(result: result, cornerRadius: 0)
+                .frame(height: 160)
+                .frame(maxWidth: .infinity)
+                .clipped()
 
+            // Info strip
             VStack(alignment: .leading, spacing: 4) {
                 Text(result.displayTitle)
-                    .font(.system(.subheadline, design: .serif).weight(.medium))
+                    .font(.system(.caption, design: .serif).weight(.semibold))
                     .foregroundStyle(Color.appTextPrimary)
                     .lineLimit(2)
+                    .multilineTextAlignment(.leading)
+                    .fixedSize(horizontal: false, vertical: true)
 
                 if let artist = result.artwork?.artist, !artist.isEmpty {
                     Text(artist)
-                        .font(.caption)
+                        .font(.caption2)
                         .foregroundStyle(Color.appTextSecondary)
                         .lineLimit(1)
                 }
 
-                HStack(spacing: 8) {
+                HStack(spacing: 0) {
                     Text(result.displayStyle)
-                        .font(.caption2.weight(.semibold))
+                        .font(.system(size: 9, weight: .semibold))
                         .textCase(.uppercase)
-                        .kerning(0.6)
+                        .kerning(0.5)
                         .foregroundStyle(accent)
-                        .padding(.horizontal, 8)
-                        .padding(.vertical, 3)
-                        .background(Capsule().fill(accent.opacity(0.16)))
-                    Text(result.formattedDate)
-                        .font(.caption2)
-                        .foregroundStyle(Color.appTextMuted)
+                    Spacer(minLength: 4)
+                    if result.isFavorite {
+                        Image(systemName: "heart.fill")
+                            .font(.system(size: 9))
+                            .foregroundStyle(Color.appAccent)
+                    }
                 }
             }
-
-            Spacer(minLength: 0)
-
-            VStack(spacing: 8) {
-                if result.isFavorite {
-                    Image(systemName: "heart.fill")
-                        .font(.caption)
-                        .foregroundStyle(Color.appAccent)
-                }
-                Image(systemName: "chevron.right")
-                    .font(.caption)
-                    .foregroundStyle(Color.appTextMuted)
-            }
+            .padding(.horizontal, 10)
+            .padding(.vertical, 9)
+            .frame(maxWidth: .infinity, alignment: .leading)
         }
-        .padding(.vertical, 4)
-        .contentShape(Rectangle())
+        .background(Color.appSurface)
+        .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+        .overlay(
+            RoundedRectangle(cornerRadius: 16, style: .continuous)
+                .strokeBorder(Color.white.opacity(0.07), lineWidth: 0.5)
+        )
     }
 }
 
