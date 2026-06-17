@@ -278,7 +278,7 @@ struct CollectionView: View {
     private var emptyState: some View {
         if !searchText.isEmpty {
             EmptyStateView(symbol: "magnifyingglass",
-                           message: "No artworks match "\(searchText)".")
+                           message: "No artworks match \"\(searchText)\".")
         } else if mode == .favorites {
             EmptyStateView(symbol: "heart",
                            message: "Save artworks that move you.")
