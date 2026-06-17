@@ -2,69 +2,47 @@
 //  ContentView.swift
 //  MuseumMate
 //
-//  The five-tab main shell: Dashboard, Scan, Collection, Memories, Profile.
-//  Gallery-appropriate symbols, gold tint, a flat tab bar.
+//  Five-tab main shell with a custom floating gold tab bar.
+//  Tabs: Dashboard · Scan · Art Pieces · Artists · Profile
 //
 
 import SwiftUI
-import UIKit
 
 enum AppTab: Hashable {
-    case dashboard, scan, collection, memories, profile
+    case dashboard, scan, collection, artists, profile
 }
 
 struct ContentView: View {
     @State private var selection: AppTab = .dashboard
-
-    init() {
-        configureTabBarAppearance()
-    }
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     var body: some View {
-        TabView(selection: $selection) {
-            DashboardView(selectedTab: $selection)
-                .tabItem { Label("Dashboard", systemImage: "square.grid.2x2") }
-                .tag(AppTab.dashboard)
+        ZStack(alignment: .bottom) {
+            // Main content — one view per tab, stable in the ZStack.
+            Group {
+                switch selection {
+                case .dashboard:
+                    DashboardView(selectedTab: $selection)
+                case .scan:
+                    UnifiedScanView()
+                case .collection:
+                    CollectionView(selectedTab: $selection)
+                case .artists:
+                    ArtistDiscoveryView()
+                case .profile:
+                    ProfileView()
+                }
+            }
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            // Push content above the floating bar.
+            .padding(.bottom, 90)
 
-            UnifiedScanView()
-                .tabItem { Label("Scan", systemImage: "camera.aperture") }
-                .tag(AppTab.scan)
-
-            CollectionView(selectedTab: $selection)
-                .tabItem { Label("Collection", systemImage: "rectangle.stack") }
-                .tag(AppTab.collection)
-
-            MemoriesView()
-                .tabItem { Label("Memories", systemImage: "photo.on.rectangle.angled") }
-                .tag(AppTab.memories)
-
-            ProfileView()
-                .tabItem { Label("Profile", systemImage: "person.crop.circle") }
-                .tag(AppTab.profile)
+            // Floating tab bar
+            CustomTabBar(selection: $selection)
+                .padding(.bottom, 8)
         }
-        .tint(Color.appAccent)
-        .onChange(of: selection) { _ in
-            Haptics.impact(.light)
-        }
-    }
-
-    private func configureTabBarAppearance() {
-        let appearance = UITabBarAppearance()
-        appearance.configureWithOpaqueBackground()
-        appearance.backgroundColor = UIColor(Color.appBackground)
-        appearance.shadowColor = .clear   // no separator line
-
-        let itemAppearance = UITabBarItemAppearance()
-        itemAppearance.selected.iconColor = UIColor(Color.appAccent)
-        itemAppearance.selected.titleTextAttributes = [.foregroundColor: UIColor(Color.appAccent)]
-        itemAppearance.normal.iconColor = UIColor(Color.appTextMuted)
-        itemAppearance.normal.titleTextAttributes = [.foregroundColor: UIColor(Color.appTextMuted)]
-        appearance.stackedLayoutAppearance = itemAppearance
-        appearance.inlineLayoutAppearance = itemAppearance
-        appearance.compactInlineLayoutAppearance = itemAppearance
-
-        UITabBar.appearance().standardAppearance = appearance
-        UITabBar.appearance().scrollEdgeAppearance = appearance
+        .ignoresSafeArea(edges: .bottom)
+        .background(Color.appBackground.ignoresSafeArea())
     }
 }
 
@@ -75,7 +53,6 @@ struct ContentView_Previews: PreviewProvider {
             .environmentObject(UserProfile())
             .environmentObject(ScanHistoryStore())
             .environmentObject(FavoritesStore())
-            .environmentObject(MemoriesStore())
             .preferredColorScheme(.dark)
     }
 }
