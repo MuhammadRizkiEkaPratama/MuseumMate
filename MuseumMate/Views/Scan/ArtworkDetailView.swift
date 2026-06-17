@@ -37,30 +37,8 @@ struct ArtworkDetailView: View {
                     .fadeSlideIn()
 
                 VStack(alignment: .leading, spacing: 26) {
-                    identityCard
-                        .fadeSlideIn(delay: 0.06)
-                    metadataGrid
-                        .fadeSlideIn(delay: 0.10)
-                    confidenceSection
-                        .fadeSlideIn(delay: 0.14)
-                    descriptionSection
-                        .fadeSlideIn(delay: 0.18)
-                    shortHistorySection
-                        .fadeSlideIn(delay: 0.22)
-                    creationStorySection
-                        .fadeSlideIn(delay: 0.26)
-                    quoteSection
-                        .fadeSlideIn(delay: 0.30)
-                    funFactsCard
-                        .fadeSlideIn(delay: 0.34)
-                    lovePoemsSection
-                        .fadeSlideIn(delay: 0.38)
-                    romanticLineSection
-                        .fadeSlideIn(delay: 0.42)
-                    artistStorySection
-                        .fadeSlideIn(delay: 0.46)
-                    actionBar
-                        .fadeSlideIn(delay: 0.50)
+                    detailSectionsTop
+                    detailSectionsBottom
                 }
                 .padding(.horizontal, 24)
                 .padding(.top, 22)
@@ -82,6 +60,40 @@ struct ArtworkDetailView: View {
                 artistPortraitURL = await ArtistImageService().fetchPortraitURL(for: artistName)
             }
         }
+    }
+
+    // MARK: - Body sections (split to stay under the ViewBuilder 10-child limit)
+
+    @ViewBuilder
+    private var detailSectionsTop: some View {
+        identityCard
+            .fadeSlideIn(delay: 0.06)
+        metadataGrid
+            .fadeSlideIn(delay: 0.10)
+        confidenceSection
+            .fadeSlideIn(delay: 0.14)
+        descriptionSection
+            .fadeSlideIn(delay: 0.18)
+        shortHistorySection
+            .fadeSlideIn(delay: 0.22)
+        creationStorySection
+            .fadeSlideIn(delay: 0.26)
+    }
+
+    @ViewBuilder
+    private var detailSectionsBottom: some View {
+        quoteSection
+            .fadeSlideIn(delay: 0.30)
+        funFactsCard
+            .fadeSlideIn(delay: 0.34)
+        lovePoemsSection
+            .fadeSlideIn(delay: 0.38)
+        romanticLineSection
+            .fadeSlideIn(delay: 0.42)
+        artistStorySection
+            .fadeSlideIn(delay: 0.46)
+        actionBar
+            .fadeSlideIn(delay: 0.50)
     }
 
     // MARK: - Hero (55% screen height)
