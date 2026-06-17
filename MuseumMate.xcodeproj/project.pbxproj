@@ -61,6 +61,13 @@
 		0FF2FF040000000000000000 /* UnifiedScanViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0FF1FF040000000000000000 /* UnifiedScanViewModel.swift */; };
 		0FF2FF050000000000000000 /* UnifiedScanView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0FF1FF050000000000000000 /* UnifiedScanView.swift */; };
 		0FF2FF060000000000000000 /* Secrets.plist in Resources */ = {isa = PBXBuildFile; fileRef = 0FF1FF060000000000000000 /* Secrets.plist */; };
+		0FF200520000000000000000 /* ArtistProfile.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0FF100520000000000000000 /* ArtistProfile.swift */; };
+		0FF200530000000000000000 /* ArtworkDetailService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0FF100530000000000000000 /* ArtworkDetailService.swift */; };
+		0FF200540000000000000000 /* ArtistImageService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0FF100540000000000000000 /* ArtistImageService.swift */; };
+		0FF200550000000000000000 /* ArtistInfoService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0FF100550000000000000000 /* ArtistInfoService.swift */; };
+		0FF200560000000000000000 /* ArtistDiscoveryViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0FF100560000000000000000 /* ArtistDiscoveryViewModel.swift */; };
+		0FF200570000000000000000 /* CustomTabBar.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0FF100570000000000000000 /* CustomTabBar.swift */; };
+		0FF200580000000000000000 /* ArtistDiscoveryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0FF100580000000000000000 /* ArtistDiscoveryView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -121,6 +128,13 @@
 		0FF1FF040000000000000000 /* UnifiedScanViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UnifiedScanViewModel.swift; sourceTree = "<group>"; };
 		0FF1FF050000000000000000 /* UnifiedScanView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UnifiedScanView.swift; sourceTree = "<group>"; };
 		0FF1FF060000000000000000 /* Secrets.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Secrets.plist; sourceTree = "<group>"; };
+		0FF100520000000000000000 /* ArtistProfile.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ArtistProfile.swift; sourceTree = "<group>"; };
+		0FF100530000000000000000 /* ArtworkDetailService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ArtworkDetailService.swift; sourceTree = "<group>"; };
+		0FF100540000000000000000 /* ArtistImageService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ArtistImageService.swift; sourceTree = "<group>"; };
+		0FF100550000000000000000 /* ArtistInfoService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ArtistInfoService.swift; sourceTree = "<group>"; };
+		0FF100560000000000000000 /* ArtistDiscoveryViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ArtistDiscoveryViewModel.swift; sourceTree = "<group>"; };
+		0FF100570000000000000000 /* CustomTabBar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CustomTabBar.swift; sourceTree = "<group>"; };
+		0FF100580000000000000000 /* ArtistDiscoveryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ArtistDiscoveryView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -191,6 +205,7 @@
 				0FF100020000000000000000 /* Artwork.swift */,
 				0FF100030000000000000000 /* ScanResult.swift */,
 				0FF100040000000000000000 /* UserProfile.swift */,
+				0FF100520000000000000000 /* ArtistProfile.swift */,
 			);
 			path = Models;
 			sourceTree = "<group>";
@@ -202,6 +217,7 @@
 				0FF100470000000000000000 /* MemoriesViewModel.swift */,
 				0FF100060000000000000000 /* ScanViewModel.swift */,
 				0FF1FF040000000000000000 /* UnifiedScanViewModel.swift */,
+				0FF100560000000000000000 /* ArtistDiscoveryViewModel.swift */,
 			);
 			path = ViewModels;
 			sourceTree = "<group>";
@@ -220,6 +236,9 @@
 				0FF1000C0000000000000000 /* ImageStore.swift */,
 				0FF1000D0000000000000000 /* ScanHistoryStore.swift */,
 				0FF1000E0000000000000000 /* VisionService.swift */,
+				0FF100530000000000000000 /* ArtworkDetailService.swift */,
+				0FF100540000000000000000 /* ArtistImageService.swift */,
+				0FF100550000000000000000 /* ArtistInfoService.swift */,
 			);
 			path = Services;
 			sourceTree = "<group>";
@@ -230,6 +249,7 @@
 				0FF1FF0100000000000000DA /* Dashboard */,
 				0FF1FF0200000000000000DA /* Collection */,
 				0FF1FF0300000000000000DA /* Memories */,
+				0FF1FF0400000000000000DA /* Artists */,
 				0F27721F2FDA5B0000DEF486 /* Explore */,
 				0F2772202FDA5B0000DEF486 /* Scan */,
 				0F2772212FDA5B0000DEF486 /* History */,
@@ -309,6 +329,7 @@
 				0FF1001B0000000000000000 /* EmptyStateView.swift */,
 				0FF1001C0000000000000000 /* LoadingView.swift */,
 				0FF1001D0000000000000000 /* ScanThumbnail.swift */,
+				0FF100570000000000000000 /* CustomTabBar.swift */,
 			);
 			path = Shared;
 			sourceTree = "<group>";
@@ -355,6 +376,14 @@
 				0FF100510000000000000000 /* MemoryDetailView.swift */,
 			);
 			path = Memories;
+			sourceTree = "<group>";
+		};
+		0FF1FF0400000000000000DA /* Artists */ = {
+			isa = PBXGroup;
+			children = (
+				0FF100580000000000000000 /* ArtistDiscoveryView.swift */,
+			);
+			path = Artists;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -455,6 +484,13 @@
 				0FF2004F0000000000000000 /* CollectionView.swift in Sources */,
 				0FF200500000000000000000 /* MemoriesView.swift in Sources */,
 				0FF200510000000000000000 /* MemoryDetailView.swift in Sources */,
+				0FF200520000000000000000 /* ArtistProfile.swift in Sources */,
+				0FF200530000000000000000 /* ArtworkDetailService.swift in Sources */,
+				0FF200540000000000000000 /* ArtistImageService.swift in Sources */,
+				0FF200550000000000000000 /* ArtistInfoService.swift in Sources */,
+				0FF200560000000000000000 /* ArtistDiscoveryViewModel.swift in Sources */,
+				0FF200570000000000000000 /* CustomTabBar.swift in Sources */,
+				0FF200580000000000000000 /* ArtistDiscoveryView.swift in Sources */,
 				0FF200010000000000000000 /* ArtStyle.swift in Sources */,
 				0FF200020000000000000000 /* Artwork.swift in Sources */,
 				0FF200030000000000000000 /* ScanResult.swift in Sources */,
