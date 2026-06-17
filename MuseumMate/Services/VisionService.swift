@@ -6,96 +6,56 @@
 //  strict JSON matching the Artwork CodingKeys. Robust against markdown
 //  fences and chatty wrappers.
 //
-// Vision provider : DeepSeek V4 Pro
-// Platform        : platform.deepseek.com
-// Docs            : api-docs.deepseek.com
-// Model           : deepseek-v4-pro
-//                   (flagship reasoning model — highest accuracy
-//                    for art identification and explanation)
-// Pricing         : ~$2.18/1M input, $8.72/1M output
-//                   (still cheaper than GPT-4o at scale)
+// Vision provider : Qwen-VL-Plus (quick identification)
+// Platform        : Alibaba DashScope (OpenAI-compatible mode)
+// Endpoint        : dashscope-intl.aliyuncs.com/compatible-mode/v1
+// Model           : qwen-vl-plus (fast, accurate visual recognition)
+//
+// Stage 2 full detail is handled by ArtworkDetailService (DeepSeek V4 Pro).
 //
 
 import UIKit
 
-final class VisionService {
-    // Stage 2 — reasoning + identification (DeepSeek V4 Pro, text only).
-    private let endpoint = "https://api.deepseek.com/chat/completions"
-    private let model = "deepseek-v4-pro"
-    private var apiKey: String { AppConfig.deepSeekAPIKey }
+/// Result of the Qwen quick-identification pass.
+struct QuickIdentification {
+    let title: String
+    let artist: String
+    let confidence: Double
+}
 
-    // Stage 1 — vision analysis (Qwen-VL). DeepSeek cannot read images, so a
-    // vision model acts as the "eyes": it describes the photo in detail, then
-    // DeepSeek reasons over that description to identify the work.
-    // Provider   : Alibaba DashScope (OpenAI-compatible mode)
-    // Endpoint   : dashscope-intl.aliyuncs.com/compatible-mode/v1
+final class VisionService {
+    // Qwen-VL-Plus — vision-only stage (stage 1 of 3 in the scan pipeline).
     private let qwenEndpoint = "https://dashscope-intl.aliyuncs.com/compatible-mode/v1/chat/completions"
-    private let qwenModel = "qwen-vl-max"
+    private let qwenModel    = "qwen-vl-plus"
     private var qwenAPIKey: String { AppConfig.qwenAPIKey }
 
-    /// Stage 1 prompt: ask Qwen to describe the artwork and guess its identity.
+    /// Minimal identification prompt: return only title, artist, confidence JSON.
     private let qwenVisionPrompt = """
-    You are an expert art historian and visual analyst. Examine this image of an artwork \
-    and describe it in rich, concrete detail: the subject and any figures, the composition, \
-    colours, lighting, brushwork and technique, mood, and the apparent art style and period. \
-    If you recognise the specific painting and its artist, state them explicitly together with \
-    your confidence. Your description will be used to identify the exact artwork, so be \
-    specific and thorough.
-    """
-
-    /// Stage 2 prompt: DeepSeek identifies the work from Qwen's visual analysis.
-    private let reasoningSystemPrompt = """
-    You are an expert art historian and poet. Based on the visual analysis provided by \
-    the user, identify the specific artwork. Respond ONLY with valid JSON — no markdown, \
+    You are an expert art historian. Look at this artwork image carefully and identify \
+    the specific painting or artwork. Respond ONLY with valid JSON — no markdown, \
     no extra text:
     {
-      "title": "...",
-      "artist": "...",
-      "year": "...",
-      "medium": "...",
-      "style": "...",
-      "location": "the museum or gallery currently holding the original",
-      "description": "2-3 paragraph rich explanation: history, meaning, technique",
-      "fun_facts": ["fact 1", "fact 2", "fact 3"],
-      "confidence": 0.0 to 1.0,
-      "quote": "A poetic or philosophical quote (1-2 sentences) this artwork evokes — \
-    either a famous quote by the artist, or a reflection the painting inspires",
-      "creation_story": "The backstory of how and why this specific artwork was created \
-    — the circumstances, the artist's emotional state, the intent, and the creative \
-    process (2-3 sentences)",
-      "romantic_line": "A sweet, poetic romantic sentence inspired by the mood, \
-    imagery, and emotion of this artwork — something beautiful to say to someone \
-    special while looking at this together (1 sentence, tender and imaginative)"
+      "title": "exact title of the artwork",
+      "artist": "full name of the artist",
+      "confidence": 0.0 to 1.0
     }
-    Never leave a field empty. If you cannot identify the specific work, set title to \
-    "Unknown" and a low confidence, but still fill all other fields with thoughtful \
-    general responses so the result remains useful and beautiful.
+    If you cannot identify the specific work, set title to "Unknown Artwork", \
+    artist to "Unknown Artist", and confidence to a low value. Always return valid JSON.
     """
+
+    // DeepSeek V4 Pro — text-only, used for Dashboard quote/trivia/explanations.
+    private let endpoint = "https://api.deepseek.com/chat/completions"
+    private let model    = "deepseek-v4-pro"
+    private var apiKey: String { AppConfig.deepSeekAPIKey }
 
     // MARK: - Public API
 
-    /// Two-stage pipeline: Qwen-VL describes the image (vision), then DeepSeek
-    /// reasons over that description to identify the work and write the catalog
-    /// entry. Photo → Qwen → visual description → DeepSeek → Artwork JSON.
-    func identifyArtwork(imageBase64: String) async throws -> Artwork {
-        guard AppConfig.hasValidQwenKey, AppConfig.hasValidAPIKey else {
-            throw VisionError.missingAPIKey
-        }
-
-        // Stage 1 — vision: Qwen-VL turns the photo into a detailed description.
-        let analysis = try await analyzeImageWithQwen(imageBase64: imageBase64)
-
-        // Stage 2 — reasoning: DeepSeek identifies the artwork from the analysis.
-        let user = """
-        Visual analysis of the artwork:
-        \(analysis)
-
-        Identify this artwork and respond with the JSON.
-        """
-        let content = try await completeText(
-            system: reasoningSystemPrompt, user: user, maxTokens: 2000, temperature: 0.3
-        )
-        return try decodeArtwork(from: content)
+    /// Stage 1 of the scan pipeline: Qwen-VL-Plus identifies the artwork name
+    /// from the image. Returns a lightweight QuickIdentification (no details).
+    /// Call ArtworkDetailService.generateFullDetail(title:artist:) for stage 3.
+    func quickIdentify(imageBase64: String) async throws -> QuickIdentification {
+        guard AppConfig.hasValidQwenKey else { throw VisionError.missingAPIKey }
+        return try await analyzeImageWithQwen(imageBase64: imageBase64)
     }
 
     // MARK: - Image encoding
@@ -106,11 +66,9 @@ final class VisionService {
         image.jpegData(compressionQuality: quality)?.base64EncodedString()
     }
 
-    // MARK: - Stage 1: Qwen-VL vision analysis
+    // MARK: - Stage 1: Qwen-VL-Plus quick identification
 
-    /// Sends the photo to Qwen-VL and returns a rich textual description that
-    /// the DeepSeek stage then reasons over. Uses the same base64 image pipeline.
-    private func analyzeImageWithQwen(imageBase64: String) async throws -> String {
+    private func analyzeImageWithQwen(imageBase64: String) async throws -> QuickIdentification {
         guard let url = URL(string: qwenEndpoint) else { throw VisionError.invalidURL }
 
         var request = URLRequest(url: url)
@@ -128,10 +86,10 @@ final class VisionService {
             ["role": "user", "content": userContent]
         ]
         let body: [String: Any] = [
-            "model": qwenModel,
-            "max_tokens": 700,
-            "temperature": 0.2,
-            "messages": messages
+            "model":       qwenModel,
+            "max_tokens":  200,
+            "temperature": 0.1,
+            "messages":    messages
         ]
         do {
             request.httpBody = try JSONSerialization.data(withJSONObject: body)
@@ -151,14 +109,16 @@ final class VisionService {
             let bodyText = String(data: data, encoding: .utf8) ?? ""
             throw VisionError.httpError(http.statusCode, bodyText)
         }
-        return try extractContent(from: data)
+
+        let content = try extractContent(from: data)
+        return try decodeQuickID(from: content)
     }
 
     // MARK: - Response parsing
 
     private func extractContent(from data: Data) throws -> String {
         guard
-            let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+            let json    = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
             let choices = json["choices"] as? [[String: Any]],
             let message = choices.first?["message"] as? [String: Any],
             let content = message["content"] as? String
@@ -169,26 +129,28 @@ final class VisionService {
         return trimmed
     }
 
-    private func decodeArtwork(from content: String) throws -> Artwork {
-        let decoder = JSONDecoder()
+    private func decodeQuickID(from content: String) throws -> QuickIdentification {
         let cleaned = stripMarkdown(content)
 
-        // First attempt: direct decode.
-        if let data = cleaned.data(using: .utf8),
-           let artwork = try? decoder.decode(Artwork.self, from: data) {
-            return artwork
+        struct Raw: Codable {
+            var title: String
+            var artist: String
+            var confidence: Double
         }
 
-        // Fallback: extract the first {...} block and retry.
-        if let start = cleaned.firstIndex(of: "{"),
-           let end = cleaned.lastIndex(of: "}"),
-           start < end {
-            let slice = String(cleaned[start...end])
-            if let data = slice.data(using: .utf8),
-               let artwork = try? decoder.decode(Artwork.self, from: data) {
-                return artwork
-            }
+        func tryDecode(_ text: String) -> QuickIdentification? {
+            guard let data = text.data(using: .utf8),
+                  let raw  = try? JSONDecoder().decode(Raw.self, from: data)
+            else { return nil }
+            return QuickIdentification(title: raw.title, artist: raw.artist, confidence: raw.confidence)
         }
+
+        if let q = tryDecode(cleaned) { return q }
+
+        if let start = cleaned.firstIndex(of: "{"),
+           let end   = cleaned.lastIndex(of: "}"),
+           start < end,
+           let q = tryDecode(String(cleaned[start...end])) { return q }
 
         throw VisionError.decodingFailed
     }

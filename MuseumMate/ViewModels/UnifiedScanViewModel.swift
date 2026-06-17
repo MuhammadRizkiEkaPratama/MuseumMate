@@ -22,16 +22,18 @@ final class UnifiedScanViewModel: ObservableObject {
         case idle
         case detectingStyle
         case identifyingArtwork
+        case gatheringDetails
         case complete
         case failed(String)
 
         var label: String {
             switch self {
-            case .idle: return ""
-            case .detectingStyle: return "Detecting style…"
+            case .idle:               return ""
+            case .detectingStyle:     return "Detecting artist…"
             case .identifyingArtwork: return "Identifying artwork…"
-            case .complete: return "Done"
-            case .failed: return "Couldn't identify"
+            case .gatheringDetails:   return "Gathering details…"
+            case .complete:           return "Done"
+            case .failed:             return "Couldn't identify"
             }
         }
     }
@@ -68,6 +70,7 @@ final class UnifiedScanViewModel: ObservableObject {
     let classifier = ArtistClassifierService()
     let recents = RecentPhotosLoader()
     private let vision = VisionService()
+    private let artworkDetail = ArtworkDetailService()
 
     private var isProcessingFrame = false
     private var isTabActive = false
@@ -168,7 +171,7 @@ final class UnifiedScanViewModel: ObservableObject {
         // Persist the image to disk (full + thumbnail).
         let saved = ImageStore.save(image)
 
-        // (b) CLOUD — precise identification (may fail offline / without a key).
+        // (b) CLOUD stage 1 — Qwen-VL-Plus: name identification (may fail offline).
         scanPhase = .identifyingArtwork
         var artwork: Artwork?
         var failureMessage: String?
@@ -176,7 +179,13 @@ final class UnifiedScanViewModel: ObservableObject {
             guard let base64 = VisionService.base64(from: image) else {
                 throw VisionError.encodingFailed
             }
-            artwork = try await vision.identifyArtwork(imageBase64: base64)
+            let quickID = try await vision.quickIdentify(imageBase64: base64)
+
+            // (c) CLOUD stage 2 — DeepSeek V4 Pro: full catalog detail.
+            scanPhase = .gatheringDetails
+            artwork = try await artworkDetail.generateFullDetail(
+                title: quickID.title, artist: quickID.artist
+            )
         } catch {
             failureMessage = (error as? LocalizedError)?.errorDescription
                 ?? "Could not reach the identification service. Style detected offline."
