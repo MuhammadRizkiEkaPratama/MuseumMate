@@ -26,6 +26,13 @@ final class UserProfile: ObservableObject {
     @Published var joinDate: Date {
         didSet { defaults.set(joinDate.timeIntervalSince1970, forKey: Keys.joinDate) }
     }
+    /// Date of birth collected during first-time profile setup. nil until set.
+    @Published var birthDate: Date? {
+        didSet { defaults.set(birthDate?.timeIntervalSince1970 ?? 0, forKey: Keys.birthDate) }
+    }
+    @Published var country: String {
+        didSet { defaults.set(country, forKey: Keys.country) }
+    }
 
     // TODO: Firebase uid — wire in Phase 7.
 
@@ -37,6 +44,8 @@ final class UserProfile: ObservableObject {
         static let onboarding = "museummate_profile_onboarding"
         static let scanCount = "museummate_profile_scancount"
         static let joinDate = "museummate_profile_joindate"
+        static let birthDate = "museummate_user_birthdate"
+        static let country = "museummate_user_country"
     }
 
     init() {
@@ -46,6 +55,10 @@ final class UserProfile: ObservableObject {
         scanCount = defaults.integer(forKey: Keys.scanCount)
         let stored = defaults.double(forKey: Keys.joinDate)
         joinDate = stored > 0 ? Date(timeIntervalSince1970: stored) : Date()
+        let storedBirth = defaults.double(forKey: Keys.birthDate)
+        birthDate = storedBirth > 0 ? Date(timeIntervalSince1970: storedBirth) : nil
+        country = defaults.string(forKey: Keys.country) ?? ""
+        // All stored properties initialized — safe to use self below.
         // Persist join date on first run.
         if stored == 0 { defaults.set(joinDate.timeIntervalSince1970, forKey: Keys.joinDate) }
     }
@@ -53,6 +66,17 @@ final class UserProfile: ObservableObject {
     var initial: String {
         let source = name.isEmpty ? email : name
         return String(source.prefix(1)).uppercased()
+    }
+
+    /// True once the user has completed the first-time data form (birthdate set).
+    var hasProfileDetails: Bool { birthDate != nil }
+
+    /// (month, day) of the birthday, for the "born on your birthday" feature.
+    var birthdayMonthDay: (month: Int, day: Int)? {
+        guard let birthDate else { return nil }
+        let comps = Calendar.current.dateComponents([.month, .day], from: birthDate)
+        guard let m = comps.month, let d = comps.day else { return nil }
+        return (m, d)
     }
 
     func reset() {

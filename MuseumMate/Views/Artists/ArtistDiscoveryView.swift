@@ -11,6 +11,7 @@ import SwiftUI
 struct ArtistDiscoveryView: View {
 
     @StateObject private var viewModel = ArtistDiscoveryViewModel()
+    @EnvironmentObject private var profile: UserProfile
 
     private let columns = [
         GridItem(.flexible(), spacing: 16),
@@ -26,23 +27,11 @@ struct ArtistDiscoveryView: View {
                     VStack(alignment: .leading, spacing: 24) {
                         header
                             .fadeSlideIn()
-
-                        LazyVGrid(columns: columns, spacing: 16) {
-                            ForEach(Array(viewModel.artists.enumerated()), id: \.element.id) { index, artist in
-                                ArtistCard(
-                                    artist: artist,
-                                    portraitURL: viewModel.portraitURLs[artist.name]
-                                )
-                                .fadeSlideIn(delay: Double(min(index, 8)) * 0.05)
-                                .onTapGesture {
-                                    Haptics.tap()
-                                    viewModel.selectArtist(artist)
-                                }
-                                .task { await viewModel.loadPortrait(for: artist) }
-                            }
-                        }
-                        .padding(.horizontal, 24)
-                        .padding(.bottom, 24)
+                        searchBar
+                            .fadeSlideIn(delay: 0.04)
+                        birthdaySection
+                            .fadeSlideIn(delay: 0.08)
+                        artistGrid
                     }
                     .padding(.top, 8)
                 }
@@ -60,6 +49,11 @@ struct ArtistDiscoveryView: View {
                 )
                 .onDisappear { viewModel.selectedProfile = nil }
             }
+            .task {
+                if let bday = profile.birthdayMonthDay {
+                    await viewModel.loadBirthdayArtist(month: bday.month, day: bday.day)
+                }
+            }
         }
     }
 
@@ -74,6 +68,158 @@ struct ArtistDiscoveryView: View {
                 .foregroundStyle(Color.appTextMuted)
         }
         .padding(.horizontal, 24)
+    }
+
+    // MARK: - Search
+
+    private var searchBar: some View {
+        HStack(spacing: 10) {
+            Image(systemName: "magnifyingglass")
+                .foregroundStyle(Color.appTextMuted)
+            TextField("", text: $viewModel.searchText,
+                      prompt: Text("Search artist, movement, country").foregroundColor(.appTextMuted))
+                .font(.subheadline)
+                .foregroundStyle(Color.appTextPrimary)
+                .tint(Color.appAccent)
+                .autocorrectionDisabled()
+            if !viewModel.searchText.isEmpty {
+                Button {
+                    viewModel.searchText = ""
+                } label: {
+                    Image(systemName: "xmark.circle.fill").foregroundStyle(Color.appTextMuted)
+                }
+            }
+        }
+        .padding(.horizontal, 14)
+        .frame(height: 44)
+        .background(RoundedRectangle(cornerRadius: 12, style: .continuous).fill(Color.appSurface))
+        .padding(.horizontal, 24)
+    }
+
+    // MARK: - Birthday section
+
+    @ViewBuilder
+    private var birthdaySection: some View {
+        if profile.birthdayMonthDay != nil && viewModel.searchText.isEmpty {
+            VStack(alignment: .leading, spacing: 12) {
+                Text("Born On Your Birthday").sectionLabel()
+                if viewModel.isLoadingBirthday && viewModel.birthdayArtist == nil {
+                    HStack(spacing: 14) {
+                        SkeletonView(cornerRadius: 12).frame(width: 64, height: 64)
+                        SkeletonLines(count: 2)
+                    }
+                    .card(padding: 14)
+                } else if let b = viewModel.birthdayArtist {
+                    BirthdayArtistCard(artist: b, portraitURL: viewModel.birthdayPortraitURL) {
+                        Haptics.tap()
+                        viewModel.selectBirthdayArtist()
+                    }
+                }
+            }
+            .padding(.horizontal, 24)
+        }
+    }
+
+    // MARK: - Grid
+
+    @ViewBuilder
+    private var artistGrid: some View {
+        if viewModel.artists.isEmpty {
+            EmptyStateView(symbol: "magnifyingglass",
+                           message: "No artists match \u{201C}\(viewModel.searchText)\u{201D}.")
+                .padding(.top, 20)
+        } else {
+            LazyVGrid(columns: columns, spacing: 16) {
+                ForEach(Array(viewModel.artists.enumerated()), id: \.element.id) { index, artist in
+                    ArtistCard(
+                        artist: artist,
+                        portraitURL: viewModel.portraitURLs[artist.name]
+                    )
+                    .fadeSlideIn(delay: Double(min(index, 8)) * 0.05)
+                    .onTapGesture {
+                        Haptics.tap()
+                        viewModel.selectArtist(artist)
+                    }
+                    .task { await viewModel.loadPortrait(for: artist) }
+                }
+            }
+            .padding(.horizontal, 24)
+            .padding(.bottom, 24)
+        }
+    }
+}
+
+// MARK: - Birthday artist card
+
+struct BirthdayArtistCard: View {
+    let artist: BirthdayArtist
+    let portraitURL: String?
+    let action: () -> Void
+
+    var body: some View {
+        Button(action: action) {
+            HStack(spacing: 14) {
+                portrait
+                    .frame(width: 64, height: 64)
+                    .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+
+                VStack(alignment: .leading, spacing: 4) {
+                    Text(artist.name)
+                        .font(.system(.headline, design: .serif))
+                        .foregroundStyle(Color.appTextPrimary)
+                        .lineLimit(1)
+                    if !artist.note.isEmpty {
+                        Text(artist.note)
+                            .font(.caption)
+                            .foregroundStyle(Color.appTextSecondary)
+                            .lineLimit(3)
+                            .fixedSize(horizontal: false, vertical: true)
+                    } else {
+                        Text("\(artist.movement) · \(artist.born)")
+                            .font(.caption)
+                            .foregroundStyle(Color.appTextSecondary)
+                    }
+                }
+                Spacer(minLength: 0)
+                Image(systemName: "chevron.right")
+                    .font(.caption)
+                    .foregroundStyle(Color.appAccent)
+            }
+            .padding(14)
+            .background(
+                RoundedRectangle(cornerRadius: 16, style: .continuous)
+                    .fill(Color.appAccent.opacity(0.10))
+            )
+            .overlay(
+                RoundedRectangle(cornerRadius: 16, style: .continuous)
+                    .strokeBorder(Color.appAccent.opacity(0.35), lineWidth: 0.5)
+            )
+        }
+        .buttonStyle(.pressable)
+    }
+
+    @ViewBuilder
+    private var portrait: some View {
+        if let urlString = portraitURL, let url = URL(string: urlString) {
+            AsyncImage(url: url) { phase in
+                switch phase {
+                case .success(let img): img.resizable().scaledToFill()
+                case .empty: SkeletonView(cornerRadius: 0)
+                default: placeholder
+                }
+            }
+        } else {
+            placeholder
+        }
+    }
+
+    private var placeholder: some View {
+        Color.appAccent.opacity(0.15)
+            .overlay(
+                Image(systemName: "gift")
+                    .font(.title3)
+                    .foregroundStyle(Color.appAccent)
+            )
     }
 }
 

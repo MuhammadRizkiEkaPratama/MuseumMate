@@ -68,6 +68,7 @@
 		0FF200560000000000000000 /* ArtistDiscoveryViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0FF100560000000000000000 /* ArtistDiscoveryViewModel.swift */; };
 		0FF200570000000000000000 /* CustomTabBar.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0FF100570000000000000000 /* CustomTabBar.swift */; };
 		0FF200580000000000000000 /* ArtistDiscoveryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0FF100580000000000000000 /* ArtistDiscoveryView.swift */; };
+		0FF200590000000000000000 /* ProfileSetupView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0FF100590000000000000000 /* ProfileSetupView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -135,6 +136,7 @@
 		0FF100560000000000000000 /* ArtistDiscoveryViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ArtistDiscoveryViewModel.swift; sourceTree = "<group>"; };
 		0FF100570000000000000000 /* CustomTabBar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CustomTabBar.swift; sourceTree = "<group>"; };
 		0FF100580000000000000000 /* ArtistDiscoveryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ArtistDiscoveryView.swift; sourceTree = "<group>"; };
+		0FF100590000000000000000 /* ProfileSetupView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfileSetupView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -310,6 +312,7 @@
 			children = (
 				0FF100180000000000000000 /* AuthView.swift */,
 				0FF100190000000000000000 /* RootView.swift */,
+				0FF100590000000000000000 /* ProfileSetupView.swift */,
 			);
 			path = Auth;
 			sourceTree = "<group>";
@@ -491,6 +494,7 @@
 				0FF200560000000000000000 /* ArtistDiscoveryViewModel.swift in Sources */,
 				0FF200570000000000000000 /* CustomTabBar.swift in Sources */,
 				0FF200580000000000000000 /* ArtistDiscoveryView.swift in Sources */,
+				0FF200590000000000000000 /* ProfileSetupView.swift in Sources */,
 				0FF200010000000000000000 /* ArtStyle.swift in Sources */,
 				0FF200020000000000000000 /* Artwork.swift in Sources */,
 				0FF200030000000000000000 /* ScanResult.swift in Sources */,

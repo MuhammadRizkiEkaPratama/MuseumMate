@@ -21,6 +21,7 @@ struct RootView: View {
         }
         .animation(.easeInOut(duration: 0.35), value: auth.isAuthenticated)
         .animation(.easeInOut(duration: 0.35), value: profile.hasCompletedOnboarding)
+        .animation(.easeInOut(duration: 0.35), value: profile.hasProfileDetails)
     }
 
     @ViewBuilder
@@ -29,6 +30,9 @@ struct RootView: View {
             OnboardingView()
         } else if !auth.isAuthenticated {
             AuthView()
+        } else if !profile.hasProfileDetails {
+            // First-time data form (name, date of birth, country).
+            ProfileSetupView()
         } else {
             ContentView()
         }

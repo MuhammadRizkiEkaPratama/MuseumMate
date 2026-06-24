@@ -15,12 +15,20 @@ struct ProfileView: View {
     @EnvironmentObject private var favoritesStore: FavoritesStore
 
     @State private var showSignOutAlert = false
-    @State private var birthdate: Date = {
-        (UserDefaults.standard.object(forKey: "museummate_user_birthdate") as? Date)
-            ?? Calendar.current.date(from: DateComponents(year: 1990, month: 1, day: 1))
-            ?? Date()
-    }()
     @State private var showBirthdatePicker = false
+
+    /// Single source of truth — reads/writes UserProfile.birthDate (which persists
+    /// consistently as a timestamp). Defaults the picker when no date is set.
+    private var birthdateBinding: Binding<Date> {
+        Binding(
+            get: {
+                profile.birthDate
+                    ?? Calendar.current.date(from: DateComponents(year: 1990, month: 1, day: 1))
+                    ?? Date()
+            },
+            set: { profile.birthDate = $0 }
+        )
+    }
 
     var body: some View {
         NavigationStack {
@@ -129,8 +137,7 @@ struct ProfileView: View {
                 rowDivider
                 birthdateRow
                 rowDivider
-                // TODO: Firebase — wire real account management in Phase 7.
-                infoRow(icon: "gearshape", title: "Manage Account", value: "Soon")
+                infoRow(icon: "globe", title: "Country", value: profile.country.isEmpty ? "—" : profile.country)
             }
             .card(padding: 16)
 
@@ -138,16 +145,13 @@ struct ProfileView: View {
                 VStack(alignment: .leading, spacing: 8) {
                     DatePicker(
                         "Birthday",
-                        selection: $birthdate,
+                        selection: birthdateBinding,
                         in: ...Date(),
                         displayedComponents: .date
                     )
                     .datePickerStyle(.wheel)
                     .labelsHidden()
                     .tint(Color.appAccent)
-                    .onChange(of: birthdate) { newDate in
-                        UserDefaults.standard.set(newDate, forKey: "museummate_user_birthdate")
-                    }
 
                     Button {
                         withAnimation(.museumSpring) { showBirthdatePicker = false }
@@ -203,10 +207,11 @@ struct ProfileView: View {
     }
 
     private var birthdateFormatted: String {
+        guard let date = profile.birthDate else { return "—" }
         let f = DateFormatter()
         f.dateStyle = .medium
         f.timeStyle = .none
-        return f.string(from: birthdate)
+        return f.string(from: date)
     }
 
     // MARK: - App

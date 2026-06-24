@@ -19,10 +19,58 @@ final class ArtistDiscoveryViewModel: ObservableObject {
     @Published var isLoadingBio = false
     @Published var bioError: String?
 
+    @Published var searchText = ""
+
+    // "Born on your birthday" feature.
+    @Published var birthdayArtist: BirthdayArtist?
+    @Published var birthdayPortraitURL: String?
+    @Published var isLoadingBirthday = false
+    private var didLoadBirthday = false
+
     private let imageService = ArtistImageService()
     private let infoService  = ArtistInfoService()
 
-    var artists: [Artist] { ArtistLibrary.all }
+    private var allArtists: [Artist] { ArtistLibrary.all }
+
+    /// The 12 artists filtered by the search query (name, movement, nationality).
+    var artists: [Artist] {
+        let query = searchText.trimmingCharacters(in: .whitespaces).lowercased()
+        guard !query.isEmpty else { return allArtists }
+        return allArtists.filter {
+            $0.name.lowercased().contains(query)
+                || $0.movement.lowercased().contains(query)
+                || $0.nationality.lowercased().contains(query)
+        }
+    }
+
+    // MARK: - Birthday artist
+
+    func loadBirthdayArtist(month: Int, day: Int) async {
+        guard !didLoadBirthday, AppConfig.hasValidAPIKey else { return }
+        didLoadBirthday = true
+        isLoadingBirthday = true
+        do {
+            let artist = try await infoService.fetchArtistBornOn(month: month, day: day)
+            birthdayArtist = artist
+            // Fetch a Wikipedia portrait for the birthday artist too.
+            if let url = await imageService.fetchPortraitURL(for: artist.name) {
+                birthdayPortraitURL = url
+            }
+        } catch {
+            // Silent failure — the birthday card simply doesn't appear.
+            print("[Birthday] lookup failed: \(error.localizedDescription)")
+            didLoadBirthday = false   // allow a retry on next appearance
+        }
+        isLoadingBirthday = false
+    }
+
+    /// Opens the bio sheet for the birthday artist (not one of the fixed 12).
+    func selectBirthdayArtist() {
+        guard let b = birthdayArtist else { return }
+        let artist = b.asArtist()
+        if let url = birthdayPortraitURL { portraitURLs[artist.name] = url }
+        selectArtist(artist)
+    }
 
     func loadPortrait(for artist: Artist) async {
         let name = artist.name
