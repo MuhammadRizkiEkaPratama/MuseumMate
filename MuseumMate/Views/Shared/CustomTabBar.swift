@@ -44,14 +44,15 @@ struct CustomTabBar: View {
             }
             .frame(height: barHeight)
             .background(alignment: .leading) {
-                // Gold raised circle sliding under the active icon
+                // Gold raised circle sliding under the active icon. Lifted up so
+                // it haloes the icon (not the label) and sits a touch higher.
                 Circle()
                     .fill(Color.appAccent.opacity(0.18))
-                    .frame(width: 48, height: 48)
+                    .frame(width: 46, height: 46)
                     .overlay(Circle().strokeBorder(Color.appAccent.opacity(0.35), lineWidth: 0.5))
                     .offset(
-                        x: tabWidth * CGFloat(activeIndex) + (tabWidth - 48) / 2,
-                        y: (barHeight - 48) / 2
+                        x: tabWidth * CGFloat(activeIndex) + (tabWidth - 46) / 2,
+                        y: -8   // lift above center so it haloes the icon, not the label
                     )
                     .animation(reduceMotion ? nil : .museumSpring, value: activeIndex)
             }
