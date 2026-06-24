@@ -343,14 +343,21 @@ struct DashboardView: View {
                     .foregroundStyle(Color.appTextMuted)
             }
 
-            if viewModel.onThisDayEvents.isEmpty {
-                Text("No recorded art history events today — but every day is a canvas.")
-                    .font(.system(.subheadline, design: .serif).italic())
-                    .foregroundStyle(Color.appTextMuted)
-                    .frame(maxWidth: .infinity, alignment: .leading)
+            if viewModel.displayedOnThisDayEvents.isEmpty {
+                if viewModel.isGeneratingOnThisDay {
+                    VStack(alignment: .leading, spacing: 10) {
+                        SkeletonLines(count: 2)
+                    }
                     .card(padding: 18)
+                } else {
+                    Text("No recorded art history events today — but every day is a canvas.")
+                        .font(.system(.subheadline, design: .serif).italic())
+                        .foregroundStyle(Color.appTextMuted)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .card(padding: 18)
+                }
             } else {
-                ForEach(viewModel.onThisDayEvents) { event in
+                ForEach(viewModel.displayedOnThisDayEvents) { event in
                     OnThisDayCard(
                         event: event,
                         isExpanded: viewModel.expandedEventID == event.id,

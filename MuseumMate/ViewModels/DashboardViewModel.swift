@@ -3,8 +3,8 @@
 //  MuseumMate
 //
 //  Loads the daily painting (Met API), DeepSeek quote + trivia, "On This Day"
-//  events, and nearby museums. Everything is cached per day so repeat
-//  visits are instant and DeepSeek is called at most once per day per item.
+//  events, and nearby museums. All network calls run in parallel on first open.
+//  Everything is cached per day so repeat visits are instant.
 //
 
 import SwiftUI
@@ -18,6 +18,8 @@ final class DashboardViewModel: ObservableObject {
     @Published var dailyTrivia: TriviaQuestion?
 
     @Published var onThisDayEvents: [ArtHistoryEvent] = []
+    @Published var generatedOnThisDayEvents: [ArtHistoryEvent] = []
+    @Published var isGeneratingOnThisDay = false
     @Published var explanations: [UUID: String] = [:]
     @Published var expandedEventID: UUID?
     @Published var loadingExplanationID: UUID?
@@ -42,18 +44,22 @@ final class DashboardViewModel: ObservableObject {
     private var cancellables = Set<AnyCancellable>()
     private var didLoad = false
 
-    // Per-day cache keys.
-    private let quoteKey = "museummate_daily_quote_v1"
-    private let triviaKey = "museummate_daily_trivia_v1"
-    private let triviaStateKey = "museummate_daily_trivia_state_v1"
-    private let explanationsKey = "museummate_daily_explanations_v1"
+    // MARK: - Cache keys
+
+    private let quoteKey             = "museummate_daily_quote_v1"
+    private let triviaKey            = "museummate_daily_trivia_v1"
+    private let triviaStateKey       = "museummate_daily_trivia_state_v1"
+    private let explanationsKey      = "museummate_daily_explanations_v1"
+    private let generatedEventsKey   = "museummate_generated_onthisday_v1"
+
+    // MARK: - Init
 
     init() {
         location.$userLocation
             .receive(on: RunLoop.main)
             .sink { [weak self] loc in
                 guard let self, let loc else { return }
-                self.nearbyMuseums = MuseumLibrary.nearest(to: loc, count: 3)
+                self.nearbyMuseums = MuseumLibrary.nearest(to: loc, count: 5)
                 self.isLoadingMuseums = false
             }
             .store(in: &cancellables)
@@ -89,12 +95,18 @@ final class DashboardViewModel: ObservableObject {
         return formatter.string(from: Date())
     }
 
+    /// Merged On This Day events — curated list first, DeepSeek-generated as fallback.
+    var displayedOnThisDayEvents: [ArtHistoryEvent] {
+        onThisDayEvents.isEmpty ? generatedOnThisDayEvents : onThisDayEvents
+    }
+
     // MARK: - Load
 
     func loadIfNeeded() async {
         guard !didLoad else { return }
         didLoad = true
 
+        // Local data — instant.
         restoreTriviaState()
         onThisDayEvents = Array(ArtHistoryLibrary.eventsForToday().prefix(4))
         explanations = DailyCache.load([UUID: String].self, key: explanationsKey) ?? [:]
@@ -106,9 +118,8 @@ final class DashboardViewModel: ObservableObject {
     private func loadMuseums() {
         isLoadingMuseums = true
         location.requestLocation()
-        // Fallback so the section never hangs (e.g. Simulator with no fix).
         Task { [weak self] in
-            try? await Task.sleep(nanoseconds: 2_500_000_000)
+            try? await Task.sleep(nanoseconds: 3_000_000_000)
             guard let self else { return }
             if self.nearbyMuseums.isEmpty {
                 self.nearbyMuseums = MuseumLibrary.famousFallback
@@ -118,80 +129,99 @@ final class DashboardViewModel: ObservableObject {
     }
 
     private func loadDailyContent() async {
-        print("[DashboardViewModel] loadDailyContent() started")
+        // 1. Show fallback painting immediately — no blank card while Met API loads.
+        if dailyPainting == nil { dailyPainting = MetObject.fallback }
+
+        // 2. Populate quote/trivia from cache before any network call.
+        if let q = DailyCache.load(String.self, key: quoteKey), !q.isEmpty { dailyQuote = q }
+        if let t = DailyCache.load(TriviaQuestion.self, key: triviaKey) { dailyTrivia = t }
+
+        // 3. Populate generated On This Day events from cache.
+        if let cached = DailyCache.load([CachedEvent].self, key: generatedEventsKey) {
+            generatedOnThisDayEvents = cached.map { $0.toEvent() }
+        }
+
+        let context = dailyPainting!
         isLoadingPainting = true
-        do {
-            let painting = try await met.fetchDailyPainting()
-            print("[DashboardViewModel] painting loaded: '\(painting.title)' by \(painting.artistDisplayName)")
-            dailyPainting = painting
-            isLoadingPainting = false
-            await loadQuoteAndTrivia(for: painting)
-        } catch {
-            print("[DashboardViewModel] fetchDailyPainting failed: \(error.localizedDescription) — using fallback")
-            isLoadingPainting = false
-            let fallback = MetObject.fallback
-            dailyPainting = fallback
-            await loadQuoteAndTrivia(for: fallback)
+
+        // 4. All four tasks run in parallel.
+        async let quoteFetch:     Void       = fetchQuoteIfNeeded(context)
+        async let triviaFetch:    Void       = fetchTriviaIfNeeded(context)
+        async let onThisDayGen:   Void       = generateOnThisDayIfNeeded()
+        async let paintingResult: MetObject? = safeFetchPainting()
+
+        _ = await (quoteFetch, triviaFetch, onThisDayGen)
+        if let p = await paintingResult { dailyPainting = p }
+        isLoadingPainting = false
+    }
+
+    private func safeFetchPainting() async -> MetObject? {
+        do { return try await met.fetchDailyPainting() }
+        catch {
+            print("[Dashboard] painting fetch failed: \(error.localizedDescription)")
+            return nil
         }
     }
 
-    private func loadQuoteAndTrivia(for painting: MetObject) async {
-        // Serve from cache first.
-        if let cachedQuote = DailyCache.load(String.self, key: quoteKey) {
-            dailyQuote = cachedQuote
-        }
-        if let cachedTrivia = DailyCache.load(TriviaQuestion.self, key: triviaKey) {
-            dailyTrivia = cachedTrivia
-        }
-
-        async let quoteDone: Void = fetchQuoteIfNeeded(painting)
-        async let triviaDone: Void = fetchTriviaIfNeeded(painting)
-        _ = await (quoteDone, triviaDone)
-    }
+    // MARK: - Quote
 
     private func fetchQuoteIfNeeded(_ painting: MetObject) async {
-        guard dailyQuote.isEmpty else {
-            print("[DashboardViewModel] quote already loaded, skipping")
-            return
-        }
+        guard dailyQuote.isEmpty else { return }
         guard AppConfig.hasValidAPIKey else {
-            print("[DashboardViewModel] DeepSeek key missing — quote skipped (add DeepSeekAPIKey to Secrets.plist)")
+            print("[Dashboard] DeepSeek key missing — quote skipped")
             return
         }
-        print("[DashboardViewModel] fetching quote for '\(painting.title)'")
         isLoadingQuote = true
         defer { isLoadingQuote = false }
         do {
             let quote = try await vision.generateArtworkQuote(painting: painting)
             if !quote.isEmpty {
-                print("[DashboardViewModel] quote received (\(quote.count) chars)")
                 dailyQuote = quote
                 DailyCache.save(quote, key: quoteKey)
             }
         } catch {
-            print("[DashboardViewModel] quote generation failed: \(error.localizedDescription)")
+            print("[Dashboard] quote failed: \(error.localizedDescription)")
         }
     }
 
+    // MARK: - Trivia
+
     private func fetchTriviaIfNeeded(_ painting: MetObject) async {
-        guard dailyTrivia == nil else {
-            print("[DashboardViewModel] trivia already loaded, skipping")
-            return
-        }
+        guard dailyTrivia == nil else { return }
         guard AppConfig.hasValidAPIKey else {
-            print("[DashboardViewModel] DeepSeek key missing — trivia skipped (add DeepSeekAPIKey to Secrets.plist)")
+            print("[Dashboard] DeepSeek key missing — trivia skipped")
             return
         }
-        print("[DashboardViewModel] fetching trivia for '\(painting.title)'")
         isLoadingTrivia = true
         defer { isLoadingTrivia = false }
         do {
             let trivia = try await vision.generateDailyTrivia(painting: painting)
-            print("[DashboardViewModel] trivia received")
             dailyTrivia = trivia
             DailyCache.save(trivia, key: triviaKey)
         } catch {
-            print("[DashboardViewModel] trivia generation failed: \(error.localizedDescription)")
+            print("[Dashboard] trivia failed: \(error.localizedDescription)")
+        }
+    }
+
+    // MARK: - On This Day DeepSeek fallback
+
+    private func generateOnThisDayIfNeeded() async {
+        guard onThisDayEvents.isEmpty, generatedOnThisDayEvents.isEmpty else { return }
+        guard AppConfig.hasValidAPIKey else { return }
+
+        isGeneratingOnThisDay = true
+        defer { isGeneratingOnThisDay = false }
+
+        let cal = Calendar.current
+        let month = cal.component(.month, from: Date())
+        let day   = cal.component(.day,   from: Date())
+
+        do {
+            let events = try await vision.generateOnThisDayFallback(month: month, day: day)
+            generatedOnThisDayEvents = events
+            DailyCache.save(events.map { CachedEvent(from: $0) }, key: generatedEventsKey)
+        } catch {
+            print("[Dashboard] On This Day generation failed: \(error.localizedDescription)")
         }
     }
 
@@ -262,5 +292,30 @@ private enum DailyCache {
             wrapper.date == MetMuseumService.todayString()
         else { return nil }
         return wrapper.value
+    }
+}
+
+// MARK: - Codable wrapper for ArtHistoryEvent (for DailyCache)
+
+private struct CachedEvent: Codable {
+    let month: Int
+    let day: Int
+    let year: Int
+    let title: String
+    let dateDescription: String
+    let category: String
+
+    init(from e: ArtHistoryEvent) {
+        month = e.month; day = e.day; year = e.year
+        title = e.title; dateDescription = e.dateDescription
+        category = e.category.rawValue
+    }
+
+    func toEvent() -> ArtHistoryEvent {
+        ArtHistoryEvent(
+            month: month, day: day, year: year,
+            title: title, dateDescription: dateDescription,
+            category: ArtHistoryEvent.EventCategory(rawValue: category) ?? .discovery
+        )
     }
 }

@@ -88,6 +88,103 @@ final class ArtistInfoService {
         return try decodeProfile(from: content)
     }
 
+    // MARK: - Artist search (unknown / regional artists)
+
+    /// Identifies any artist by name — including regional or less-famous ones —
+    /// and returns a lightweight Artist struct suitable for the discovery grid.
+    /// The caller can then invoke fetchArtistInfo(name:) for a full biography.
+    func searchArtist(query: String) async throws -> Artist {
+        guard AppConfig.hasValidAPIKey else { throw VisionError.missingAPIKey }
+        guard let url = URL(string: endpoint) else { throw VisionError.invalidURL }
+
+        let system = """
+        You are an art historian. Given a name or partial name of any visual artist \
+        (painter, sculptor, printmaker, etc.) from any country or era, identify them \
+        and return basic profile info. Respond ONLY with valid JSON — no markdown:
+        {
+          "name": "full name",
+          "nationality": "e.g. Indonesian",
+          "movement": "primary art movement or style",
+          "born": "birth year, e.g. 1811",
+          "died": "death year or 'present', e.g. 1880",
+          "accent_color_hex": "#C9A227"
+        }
+        If the query does not match any known visual artist, return name as \
+        "Artist Not Found" and all other fields as empty strings. \
+        Never invent an artist. Pick an accent_color_hex that fits the artist's style/era.
+        """
+        let messages: [[String: Any]] = [
+            ["role": "system", "content": system],
+            ["role": "user",   "content": "Search artist: \(query)"]
+        ]
+        let body: [String: Any] = [
+            "model": model, "max_tokens": 200, "temperature": 0.3, "messages": messages
+        ]
+        var request = URLRequest(url: url)
+        request.httpMethod = "POST"
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        request.setValue("Bearer \(apiKey)", forHTTPHeaderField: "Authorization")
+        request.timeoutInterval = 30
+        request.httpBody = try? JSONSerialization.data(withJSONObject: body)
+
+        let (data, response): (Data, URLResponse)
+        do {
+            (data, response) = try await URLSession.shared.data(for: request)
+        } catch { throw VisionError.network(error.localizedDescription) }
+
+        guard let http = response as? HTTPURLResponse else { throw VisionError.invalidResponse }
+        guard (200...299).contains(http.statusCode) else {
+            if http.statusCode == 429 { throw VisionError.rateLimited }
+            throw VisionError.httpError(http.statusCode, "")
+        }
+        guard
+            let json    = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+            let choices = json["choices"] as? [[String: Any]],
+            let message = choices.first?["message"] as? [String: Any],
+            let content = message["content"] as? String
+        else { throw VisionError.emptyResponse }
+
+        return try decodeSearchResult(from: content)
+    }
+
+    private func decodeSearchResult(from content: String) throws -> Artist {
+        struct SearchResult: Codable {
+            var name: String
+            var nationality: String
+            var movement: String
+            var born: String
+            var died: String
+            var accent_color_hex: String
+        }
+
+        let text = stripFences(content)
+        func tryDecode(_ s: String) -> SearchResult? {
+            guard let d = s.data(using: .utf8) else { return nil }
+            return try? JSONDecoder().decode(SearchResult.self, from: d)
+        }
+
+        var result: SearchResult?
+        if let r = tryDecode(text) { result = r }
+        else if let start = text.firstIndex(of: "{"),
+                let end   = text.lastIndex(of: "}"),
+                start < end,
+                let r = tryDecode(String(text[start...end])) { result = r }
+
+        guard let r = result, r.name != "Artist Not Found", !r.name.isEmpty else {
+            throw VisionError.emptyResponse
+        }
+
+        return Artist(
+            name: r.name,
+            datasetLabel: r.name,
+            nationality: r.nationality,
+            movement: r.movement,
+            born: r.born,
+            died: r.died,
+            accentColorHex: r.accent_color_hex.isEmpty ? "#C9A227" : r.accent_color_hex
+        )
+    }
+
     // MARK: - Born-on-your-birthday lookup
 
     /// Asks DeepSeek which famous painter was born on the given month/day.

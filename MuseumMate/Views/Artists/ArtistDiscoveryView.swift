@@ -54,6 +54,9 @@ struct ArtistDiscoveryView: View {
                     await viewModel.loadBirthdayArtist(month: bday.month, day: bday.day)
                 }
             }
+            .onChange(of: viewModel.searchText) { newText in
+                viewModel.onSearchChanged(newText)
+            }
         }
     }
 
@@ -125,9 +128,20 @@ struct ArtistDiscoveryView: View {
     @ViewBuilder
     private var artistGrid: some View {
         if viewModel.artists.isEmpty {
-            EmptyStateView(symbol: "magnifyingglass",
-                           message: "No artists match \u{201C}\(viewModel.searchText)\u{201D}.")
-                .padding(.top, 20)
+            VStack(spacing: 20) {
+                EmptyStateView(symbol: "magnifyingglass",
+                               message: "No artists match \u{201C}\(viewModel.searchText)\u{201D}.")
+                    .padding(.top, 8)
+
+                // DeepSeek AI search result
+                if viewModel.isDeepSeekSearching {
+                    deepSeekSearchingCard
+                } else if let found = viewModel.deepSeekFoundArtist {
+                    deepSeekResultCard(found)
+                }
+            }
+            .padding(.horizontal, 24)
+            .padding(.bottom, 24)
         } else {
             LazyVGrid(columns: columns, spacing: 16) {
                 ForEach(Array(viewModel.artists.enumerated()), id: \.element.id) { index, artist in
@@ -146,6 +160,102 @@ struct ArtistDiscoveryView: View {
             .padding(.horizontal, 24)
             .padding(.bottom, 24)
         }
+    }
+
+    // MARK: - DeepSeek search cards
+
+    private var deepSeekSearchingCard: some View {
+        HStack(spacing: 14) {
+            ProgressView()
+                .tint(Color.appAccent)
+                .frame(width: 44, height: 44)
+            VStack(alignment: .leading, spacing: 4) {
+                Text("Searching with AI...")
+                    .font(.subheadline.weight(.medium))
+                    .foregroundStyle(Color.appTextPrimary)
+                Text("Looking up this artist via DeepSeek")
+                    .font(.caption)
+                    .foregroundStyle(Color.appTextMuted)
+            }
+            Spacer(minLength: 0)
+        }
+        .padding(16)
+        .background(
+            RoundedRectangle(cornerRadius: 16, style: .continuous)
+                .fill(Color.appSurface)
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: 16, style: .continuous)
+                .strokeBorder(Color.appAccent.opacity(0.25), lineWidth: 0.5)
+        )
+    }
+
+    private func deepSeekResultCard(_ artist: Artist) -> some View {
+        Button {
+            Haptics.tap()
+            viewModel.selectArtist(artist)
+        } label: {
+            HStack(spacing: 14) {
+                // Portrait or initial placeholder
+                ZStack {
+                    RoundedRectangle(cornerRadius: 12, style: .continuous)
+                        .fill(Color(hex: artist.accentColorHex).opacity(0.15))
+                    if let url = viewModel.portraitURLs[artist.name], let parsed = URL(string: url) {
+                        AsyncImage(url: parsed) { phase in
+                            if case .success(let img) = phase {
+                                img.resizable().scaledToFill()
+                                    .frame(width: 56, height: 56).clipped()
+                            } else {
+                                Text(String(artist.name.prefix(1)))
+                                    .font(.system(size: 26, design: .serif).weight(.light))
+                                    .foregroundStyle(Color(hex: artist.accentColorHex))
+                            }
+                        }
+                    } else {
+                        Text(String(artist.name.prefix(1)))
+                            .font(.system(size: 26, design: .serif).weight(.light))
+                            .foregroundStyle(Color(hex: artist.accentColorHex))
+                    }
+                }
+                .frame(width: 56, height: 56)
+                .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+
+                VStack(alignment: .leading, spacing: 4) {
+                    HStack(spacing: 6) {
+                        Image(systemName: "sparkles")
+                            .font(.caption2)
+                            .foregroundStyle(Color.appAccent)
+                        Text("Found via AI")
+                            .font(.caption2.weight(.semibold))
+                            .foregroundStyle(Color.appAccent)
+                    }
+                    Text(artist.name)
+                        .font(.system(.headline, design: .serif))
+                        .foregroundStyle(Color.appTextPrimary)
+                        .lineLimit(1)
+                    Text("\(artist.nationality) · \(artist.movement)")
+                        .font(.caption)
+                        .foregroundStyle(Color.appTextSecondary)
+                    Text("\(artist.born) – \(artist.died)")
+                        .font(.caption2)
+                        .foregroundStyle(Color.appTextMuted)
+                }
+                Spacer(minLength: 0)
+                Image(systemName: "chevron.right")
+                    .font(.caption)
+                    .foregroundStyle(Color.appAccent)
+            }
+            .padding(16)
+            .background(
+                RoundedRectangle(cornerRadius: 16, style: .continuous)
+                    .fill(Color.appSurface)
+            )
+            .overlay(
+                RoundedRectangle(cornerRadius: 16, style: .continuous)
+                    .strokeBorder(Color.appAccent.opacity(0.35), lineWidth: 0.5)
+            )
+        }
+        .buttonStyle(.pressable)
     }
 }
 
@@ -203,11 +313,17 @@ struct BirthdayArtistCard: View {
         if let urlString = portraitURL, let url = URL(string: urlString) {
             AsyncImage(url: url) { phase in
                 switch phase {
-                case .success(let img): img.resizable().scaledToFill()
+                case .success(let img):
+                    // Explicit frame + clipped inside AsyncImage prevents overflow.
+                    img.resizable()
+                        .scaledToFill()
+                        .frame(width: 64, height: 64, alignment: .top)
+                        .clipped()
                 case .empty: SkeletonView(cornerRadius: 0)
                 default: placeholder
                 }
             }
+            .frame(width: 64, height: 64)
         } else {
             placeholder
         }

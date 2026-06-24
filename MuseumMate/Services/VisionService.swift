@@ -207,6 +207,65 @@ extension VisionService {
         return try decodeTrivia(from: text)
     }
 
+    /// Asks DeepSeek for 1–2 real art-history events on the given month/day when
+    /// the local ArtHistoryLibrary has no entries for that date.
+    func generateOnThisDayFallback(month: Int, day: Int) async throws -> [ArtHistoryEvent] {
+        let formatter = DateFormatter()
+        formatter.locale = Locale(identifier: "en_US")
+        formatter.dateFormat = "MMMM"
+        let components = DateComponents(month: month, day: day)
+        let refDate = Calendar.current.date(from: components) ?? Date()
+        let monthName = formatter.string(from: refDate)
+
+        let prompt = """
+        List 1-2 notable art-history events that occurred on \(monthName) \(day) in any year. \
+        Include births, deaths, major exhibitions, or significant artwork creations. \
+        Respond ONLY with a valid JSON array — no markdown, no extra text:
+        [
+          {"year": 1880, "title": "one-sentence event description", "category": "death"},
+          {"year": 1923, "title": "another event", "category": "creation"}
+        ]
+        "category" must be exactly one of: birth, death, creation, exhibition, movement, discovery. \
+        Events must be real and historically verified. \
+        Return at least 1 event even for obscure dates.
+        """
+        let text = try await completeText(system: nil, user: prompt, maxTokens: 250, temperature: 0.4)
+
+        struct RawEvent: Codable {
+            let year: Int
+            let title: String
+            let category: String
+        }
+
+        func tryDecodeArray(_ s: String) -> [RawEvent]? {
+            guard let d = s.data(using: .utf8) else { return nil }
+            return try? JSONDecoder().decode([RawEvent].self, from: d)
+        }
+
+        let cleaned = stripMarkdown(text)
+        var items: [RawEvent] = []
+        if let parsed = tryDecodeArray(cleaned) {
+            items = parsed
+        } else if let start = cleaned.firstIndex(of: "["),
+                  let end = cleaned.lastIndex(of: "]"),
+                  start < end,
+                  let parsed = tryDecodeArray(String(cleaned[start...end])) {
+            items = parsed
+        }
+
+        guard !items.isEmpty else { throw VisionError.decodingFailed }
+
+        return items.map { raw in
+            let cat = ArtHistoryEvent.EventCategory(rawValue: raw.category) ?? .discovery
+            return ArtHistoryEvent(
+                month: month, day: day, year: raw.year,
+                title: raw.title,
+                dateDescription: "\(monthName) \(day), \(raw.year)",
+                category: cat
+            )
+        }
+    }
+
     /// Why an art-history event mattered, in 2–3 sentences.
     func generateOnThisDayExplanation(event: ArtHistoryEvent) async throws -> String {
         let prompt = """
