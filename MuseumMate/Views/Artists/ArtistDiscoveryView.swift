@@ -308,22 +308,36 @@ struct ArtistBioSheet: View {
                 Color.appBackground.ignoresSafeArea()
 
                 ScrollView(showsIndicators: false) {
-                    VStack(alignment: .leading, spacing: 28) {
+                    VStack(alignment: .leading, spacing: 0) {
                         heroSection
                             .fadeSlideIn()
+
+                        // Artist identity — placed BELOW image with solid
+                        // appBackground backing so it never overlaps the photo.
+                        artistIdentity
+                            .padding(.horizontal, 24)
+                            .padding(.top, 16)
+                            .padding(.bottom, 20)
+                            .fadeSlideIn(delay: 0.04)
+
+                        Rectangle()
+                            .fill(Color.white.opacity(0.07))
+                            .frame(height: 1)
+                            .padding(.horizontal, 24)
 
                         VStack(alignment: .leading, spacing: 20) {
                             if isLoading {
                                 loadingSection
-                                    .fadeSlideIn(delay: 0.06)
+                                    .fadeSlideIn(delay: 0.08)
                             } else if let error {
                                 errorSection(error)
-                                    .fadeSlideIn(delay: 0.06)
+                                    .fadeSlideIn(delay: 0.08)
                             } else if let profile {
                                 bioContent(profile)
                             }
                         }
                         .padding(.horizontal, 24)
+                        .padding(.top, 20)
                         .padding(.bottom, 32)
                     }
                 }
@@ -341,34 +355,39 @@ struct ArtistBioSheet: View {
         }
     }
 
+    // Hero image only — no text inside ZStack to prevent overlap.
     @ViewBuilder
     private var heroSection: some View {
-        ZStack(alignment: .bottomLeading) {
+        ZStack(alignment: .bottom) {
             portraitHero
+            // Gradient fades image into appBackground so the identity
+            // section below reads cleanly against a solid background.
             LinearGradient(
-                colors: [.clear, Color.appBackground.opacity(0.95)],
-                startPoint: .center,
+                colors: [.clear, Color.appBackground],
+                startPoint: .init(x: 0.5, y: 0.55),
                 endPoint: .bottom
             )
-            .frame(height: 140)
-            .frame(maxWidth: .infinity)
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
             .allowsHitTesting(false)
-
-            VStack(alignment: .leading, spacing: 4) {
-                Text(artist.name)
-                    .font(.system(.largeTitle, design: .serif).weight(.regular))
-                    .foregroundStyle(Color.appTextPrimary)
-                Text("\(artist.nationality) · \(artist.movement)")
-                    .font(.subheadline)
-                    .foregroundStyle(Color.appTextSecondary)
-                Text("\(artist.born) – \(artist.died)")
-                    .font(.caption)
-                    .foregroundStyle(Color.appTextMuted)
-            }
-            .padding(.horizontal, 24)
-            .padding(.bottom, 16)
         }
-        .frame(height: 280)
+        .frame(height: 260)
+        .clipped()  // prevent scaledToFill image from bleeding outside frame
+    }
+
+    // Artist name / nationality / dates — own layout row, never overlaps image.
+    private var artistIdentity: some View {
+        VStack(alignment: .leading, spacing: 5) {
+            Text(artist.name)
+                .font(.system(.title, design: .serif).weight(.regular))
+                .foregroundStyle(Color.appTextPrimary)
+                .fixedSize(horizontal: false, vertical: true)
+            Text("\(artist.nationality) · \(artist.movement)")
+                .font(.subheadline)
+                .foregroundStyle(Color.appTextSecondary)
+            Text("\(artist.born) – \(artist.died)")
+                .font(.caption)
+                .foregroundStyle(Color.appTextMuted)
+        }
     }
 
     @ViewBuilder
