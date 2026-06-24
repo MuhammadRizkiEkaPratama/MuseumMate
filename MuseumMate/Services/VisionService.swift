@@ -43,9 +43,9 @@ final class VisionService {
     artist to "Unknown Artist", and confidence to a low value. Always return valid JSON.
     """
 
-    // DeepSeek V4 Pro — text-only, used for Dashboard quote/trivia/explanations.
+    // DeepSeek-chat (V3) — text-only, used for Dashboard quote/trivia/explanations.
     private let endpoint = "https://api.deepseek.com/chat/completions"
-    private let model    = "deepseek-v4-pro"
+    private let model    = "deepseek-chat"
     private var apiKey: String { AppConfig.deepSeekAPIKey }
 
     // MARK: - Public API
@@ -233,7 +233,7 @@ extension VisionService {
         messages.append(["role": "user", "content": user])
 
         let body: [String: Any] = [
-            "model": "deepseek-v4-pro",
+            "model": "deepseek-chat",
             "max_tokens": maxTokens,
             "temperature": temperature,
             "messages": messages
@@ -254,8 +254,10 @@ extension VisionService {
         }
         guard let http = response as? HTTPURLResponse else { throw VisionError.invalidResponse }
         guard (200...299).contains(http.statusCode) else {
+            let bodyText = String(data: data, encoding: .utf8) ?? ""
+            print("[DeepSeek] HTTP \(http.statusCode): \(bodyText)")
             if http.statusCode == 429 { throw VisionError.rateLimited }
-            throw VisionError.httpError(http.statusCode, "")
+            throw VisionError.httpError(http.statusCode, bodyText)
         }
 
         guard

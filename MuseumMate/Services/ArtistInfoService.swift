@@ -11,7 +11,7 @@ import Foundation
 final class ArtistInfoService {
 
     private let endpoint = "https://api.deepseek.com/chat/completions"
-    private let model    = "deepseek-v4-pro"
+    private let model    = "deepseek-chat"
     private var apiKey: String { AppConfig.deepSeekAPIKey }
 
     private let systemPrompt = """
@@ -71,8 +71,9 @@ final class ArtistInfoService {
         }
         guard let http = response as? HTTPURLResponse else { throw VisionError.invalidResponse }
         guard (200...299).contains(http.statusCode) else {
-            if http.statusCode == 429 { throw VisionError.rateLimited }
             let bodyText = String(data: data, encoding: .utf8) ?? ""
+            print("[DeepSeek] artistInfo HTTP \(http.statusCode): \(bodyText)")
+            if http.statusCode == 429 { throw VisionError.rateLimited }
             throw VisionError.httpError(http.statusCode, bodyText)
         }
 

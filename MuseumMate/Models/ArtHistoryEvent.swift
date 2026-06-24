@@ -96,6 +96,7 @@ enum ArtHistoryLibrary {
         e(6, 10, 1819, "Gustave Courbet was born", "June 10, 1819", .birth),
         e(6, 15, 1888, "Paul Gauguin moved to Pont-Aven, Brittany to paint", "June 15, 1888", .movement),
         e(6, 16, 1958, "Frida Kahlo's first posthumous solo exhibition opened in Mexico City", "June 16, 1958", .exhibition),
+        e(6, 17, 1898, "Edward Burne-Jones, the English Pre-Raphaelite painter, died", "June 17, 1898", .death),
         e(6, 18, 1889, "Van Gogh painted \u{201C}The Starry Night\u{201D}", "June 18, 1889", .creation),
         e(6, 28, 1577, "Peter Paul Rubens was born", "June 28, 1577", .birth),
         e(6, 29, 1900, "Antoine de Saint-Exupéry, author-illustrator of The Little Prince, was born", "June 29, 1900", .birth),
