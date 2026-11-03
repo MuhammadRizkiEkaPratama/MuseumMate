@@ -30,6 +30,10 @@
 	<string>MuseumMate saves museum memory photos you capture so you can revisit them later.</string>
 	<key>NSLocationWhenInUseUsageDescription</key>
 	<string>MuseumMate uses your location to show museums near you on the dashboard.</string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>MuseumMate uses the microphone to let you search your scan history by speaking an artwork title or artist name.</string>
+	<key>NSSpeechRecognitionUsageDescription</key>
+	<string>MuseumMate uses speech recognition to convert your spoken words into a search query for your scan history.</string>
 	<key>UIApplicationSceneManifest</key>
 	<dict>
 		<key>UIApplicationSupportsMultipleScenes</key>

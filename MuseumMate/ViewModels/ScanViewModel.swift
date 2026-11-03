@@ -36,7 +36,7 @@ final class ScanViewModel: ObservableObject {
     @Published var localArtistPreview: String?
     @Published var localConfidencePreview: Double = 0
 
-    let classifier = ArtistClassifierService()
+    let classifier = ArtStyleClassifierService()
     private let vision = VisionService()
     private let artworkDetail = ArtworkDetailService()
 
@@ -53,7 +53,7 @@ final class ScanViewModel: ObservableObject {
             await classifier.classify(cgImage: cgImage)
         }
         let localArtist = classifier.detectedArtist
-        let localConfidence = classifier.confidence
+        let localConfidence = classifier.artistConfidence
         localArtistPreview = localArtist
         localConfidencePreview = localConfidence
 

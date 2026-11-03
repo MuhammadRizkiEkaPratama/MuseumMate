@@ -7,15 +7,19 @@
 //
 
 import SwiftUI
+import UniformTypeIdentifiers
 
 struct DashboardView: View {
     @Binding var selectedTab: AppTab
 
     @EnvironmentObject private var auth: AuthService
+    @EnvironmentObject private var ambientPlayer: AmbientAudioService
     @StateObject private var viewModel = DashboardViewModel()
 
-    @State private var showPaintingSheet = false
+    @State private var showPaintingSheet  = false
     @State private var selectedMuseum: Museum?
+    @State private var showAudioImporter  = false
+    @State private var showUserTracks     = false
 
     private var name: String {
         auth.currentUserName.isEmpty ? "Art Lover" : auth.currentUserName.split(separator: " ").first.map(String.init) ?? "Art Lover"
@@ -26,12 +30,13 @@ struct DashboardView: View {
             ScrollView(showsIndicators: false) {
                 VStack(alignment: .leading, spacing: 32) {
                     greeting.fadeSlideIn()
-                    dailyPaintingSection.fadeSlideIn(delay: 0.06)
-                    quoteSection.fadeSlideIn(delay: 0.12)
-                    triviaSection.fadeSlideIn(delay: 0.18)
-                    onThisDaySection.fadeSlideIn(delay: 0.24)
-                    nearbyMuseumsSection.fadeSlideIn(delay: 0.30)
-                    scanCTASection.fadeSlideIn(delay: 0.36)
+                    museumAmbienceSection.fadeSlideIn(delay: 0.04)
+                    dailyPaintingSection.fadeSlideIn(delay: 0.08)
+                    quoteSection.fadeSlideIn(delay: 0.14)
+                    triviaSection.fadeSlideIn(delay: 0.20)
+                    onThisDaySection.fadeSlideIn(delay: 0.26)
+                    nearbyMuseumsSection.fadeSlideIn(delay: 0.32)
+                    scanCTASection.fadeSlideIn(delay: 0.38)
                 }
                 .padding(.horizontal, 24)
                 .padding(.top, 8)
@@ -65,6 +70,236 @@ struct DashboardView: View {
                 .foregroundStyle(Color.appTextPrimary)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
+    }
+
+    // MARK: - 0. Museum Ambience Player
+
+    private var museumAmbienceSection: some View {
+        let hasAudio = ambientPlayer.trackCount > 0
+        let isActive  = ambientPlayer.isPlaying || ambientPlayer.isPaused
+
+        return VStack(alignment: .leading, spacing: 14) {
+            // Header row: icon + track info + stop button
+            HStack(spacing: 12) {
+                ZStack {
+                    Circle()
+                        .fill(isActive
+                              ? Color.appAccent.opacity(0.15)
+                              : Color.appSurfaceUp)
+                        .frame(width: 44, height: 44)
+                    Image(systemName: ambientPlayer.isPlaying
+                          ? "music.note.list"
+                          : (ambientPlayer.isPaused ? "pause.fill" : "music.note"))
+                        .font(.system(size: 17, weight: .medium))
+                        .foregroundStyle(isActive ? Color.appAccent : Color.appTextMuted)
+                }
+
+                VStack(alignment: .leading, spacing: 3) {
+                    Text("Museum Ambience")
+                        .font(.system(.headline, design: .serif).weight(.medium))
+                        .foregroundStyle(Color.appTextPrimary)
+                    Group {
+                        if ambientPlayer.isPlaying {
+                            Text(ambientPlayer.currentTrackName.isEmpty
+                                 ? "Playing classical music…"
+                                 : ambientPlayer.currentTrackName)
+                        } else if ambientPlayer.isPaused {
+                            Text("Paused — \(ambientPlayer.currentTrackName)")
+                        } else {
+                            Text(hasAudio
+                                 ? "\(ambientPlayer.trackCount) classical tracks"
+                                 : "Add tracks to Resources/Audio/")
+                        }
+                    }
+                    .font(.caption)
+                    .foregroundStyle(isActive ? Color.appAccent : Color.appTextMuted)
+                    .lineLimit(1)
+                }
+
+                Spacer(minLength: 0)
+
+                // Stop button (only while active)
+                if isActive {
+                    Button {
+                        Haptics.tap()
+                        ambientPlayer.stopPlayback()
+                    } label: {
+                        Image(systemName: "stop.fill")
+                            .font(.system(size: 13, weight: .semibold))
+                            .foregroundStyle(Color.appTextSecondary)
+                            .frame(width: 34, height: 34)
+                            .background(Circle().fill(Color.appSurfaceUp))
+                    }
+                    .buttonStyle(.pressable)
+                    .transition(.opacity.combined(with: .scale))
+                }
+            }
+
+            // Transport controls: prev · play/pause · next (+ track counter)
+            HStack(spacing: 0) {
+                // Previous
+                Button {
+                    Haptics.tap()
+                    ambientPlayer.previous()
+                } label: {
+                    Image(systemName: "backward.fill")
+                        .font(.system(size: 16, weight: .medium))
+                        .foregroundStyle(isActive ? Color.appTextSecondary : Color.appTextMuted)
+                        .frame(width: 44, height: 44)
+                }
+                .buttonStyle(.pressable)
+                .disabled(!isActive)
+
+                Spacer()
+
+                // Play / Pause (centre, larger)
+                Button {
+                    Haptics.impact(.medium)
+                    if ambientPlayer.isPlaying {
+                        ambientPlayer.pause()
+                    } else if ambientPlayer.isPaused {
+                        ambientPlayer.resume()
+                    } else {
+                        ambientPlayer.startMuseumAmbient()
+                    }
+                } label: {
+                    Image(systemName: ambientPlayer.isPlaying ? "pause.fill" : "play.fill")
+                        .font(.system(size: 18, weight: .semibold))
+                        .foregroundStyle(hasAudio ? Color.appBackground : Color.appTextMuted)
+                        .frame(width: 52, height: 52)
+                        .background(
+                            Circle().fill(hasAudio ? Color.appAccent : Color.appSurfaceUp)
+                        )
+                }
+                .buttonStyle(.pressable)
+                .disabled(!hasAudio)
+
+                Spacer()
+
+                // Next
+                Button {
+                    Haptics.tap()
+                    ambientPlayer.next()
+                } label: {
+                    Image(systemName: "forward.fill")
+                        .font(.system(size: 16, weight: .medium))
+                        .foregroundStyle(isActive ? Color.appTextSecondary : Color.appTextMuted)
+                        .frame(width: 44, height: 44)
+                }
+                .buttonStyle(.pressable)
+                .disabled(!isActive)
+            }
+
+            // Track counter
+            if isActive && ambientPlayer.trackCount > 1 {
+                HStack {
+                    Spacer()
+                    Text("Track \(ambientPlayer.currentTrackIndex + 1) of \(ambientPlayer.trackCount)")
+                        .font(.caption2.monospacedDigit())
+                        .foregroundStyle(Color.appTextMuted)
+                    Spacer()
+                }
+                .transition(.opacity)
+            }
+
+            // User-imported tracks list (collapsible)
+            if !ambientPlayer.userTrackNames.isEmpty {
+                VStack(alignment: .leading, spacing: 6) {
+                    Button {
+                        withAnimation(.museumSpring) { showUserTracks.toggle() }
+                    } label: {
+                        HStack {
+                            Text("My tracks (\(ambientPlayer.userTrackNames.count))")
+                                .font(.caption.weight(.semibold))
+                                .foregroundStyle(Color.appTextSecondary)
+                            Spacer()
+                            Image(systemName: showUserTracks ? "chevron.up" : "chevron.down")
+                                .font(.caption2)
+                                .foregroundStyle(Color.appTextMuted)
+                        }
+                    }
+                    .buttonStyle(.pressable)
+
+                    if showUserTracks {
+                        ForEach(Array(ambientPlayer.userTrackNames.enumerated()), id: \.offset) { i, name in
+                            HStack {
+                                Image(systemName: "music.note")
+                                    .font(.caption2)
+                                    .foregroundStyle(Color.appAccent)
+                                Text(name)
+                                    .font(.caption)
+                                    .foregroundStyle(Color.appTextPrimary)
+                                    .lineLimit(1)
+                                Spacer()
+                                Button {
+                                    ambientPlayer.removeUserTrack(at: i)
+                                } label: {
+                                    Image(systemName: "trash")
+                                        .font(.caption2)
+                                        .foregroundStyle(Color.appDanger)
+                                }
+                                .buttonStyle(.pressable)
+                            }
+                            .padding(.vertical, 2)
+                        }
+                        .transition(.opacity.combined(with: .move(edge: .top)))
+                    }
+                }
+                .padding(.top, 4)
+            }
+
+            // Add music button
+            Button {
+                showAudioImporter = true
+            } label: {
+                HStack(spacing: 6) {
+                    Image(systemName: "plus.circle.fill")
+                        .font(.caption.weight(.semibold))
+                    Text("Add your music")
+                        .font(.caption.weight(.semibold))
+                }
+                .foregroundStyle(Color.appAccent)
+            }
+            .buttonStyle(.pressable)
+            .fileImporter(
+                isPresented: $showAudioImporter,
+                allowedContentTypes: [.audio, .mp3, UTType(filenameExtension: "m4a") ?? .audio],
+                allowsMultipleSelection: true
+            ) { result in
+                guard case .success(let urls) = result else { return }
+                for url in urls {
+                    if url.startAccessingSecurityScopedResource() {
+                        ambientPlayer.importTrack(from: url)
+                        url.stopAccessingSecurityScopedResource()
+                    }
+                }
+            }
+
+            // No-audio hint
+            if !hasAudio {
+                Text("Add your own music above, or download public-domain classical tracks from musopen.org and add them to Resources/Audio/ in Xcode.")
+                    .font(.caption2)
+                    .foregroundStyle(Color.appTextMuted)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+        }
+        .padding(18)
+        .background(
+            RoundedRectangle(cornerRadius: 18, style: .continuous)
+                .fill(Color.appSurface)
+                .overlay(
+                    RoundedRectangle(cornerRadius: 18, style: .continuous)
+                        .strokeBorder(
+                            isActive
+                                ? Color.appAccent.opacity(0.35)
+                                : Color.white.opacity(0.06),
+                            lineWidth: 1
+                        )
+                )
+        )
+        .animation(.museumSpring, value: ambientPlayer.isPlaying)
+        .animation(.museumSpring, value: ambientPlayer.isPaused)
+        .animation(.museumSpring, value: ambientPlayer.currentTrackName)
     }
 
     // MARK: - 1. Daily painting

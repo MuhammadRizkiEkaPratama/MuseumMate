@@ -2,91 +2,132 @@
 //  AuthService.swift
 //  MuseumMate
 //
-//  STUB authentication. No real backend yet — all methods simulate an
-//  async network delay and persist a local "logged in" flag.
-//  Firebase Auth + Google Sign-In are wired in Phase 7.
+//  Firebase Auth + Google Sign-In.
+//  REQUIRES: firebase-ios-sdk (FirebaseAuth) + GoogleSignIn-iOS SPM packages.
 //
 
 import Foundation
-import Combine
+import FirebaseAuth
+import GoogleSignIn
+import FirebaseCore
 
 @MainActor
 final class AuthService: ObservableObject {
-    @Published var isAuthenticated: Bool
-    @Published var currentUserName: String
-    @Published var currentUserEmail: String
-    @Published var isLoading = false
+    @Published var isAuthenticated = false
+    @Published var currentUserName  = ""
+    @Published var currentUserEmail = ""
+    @Published var currentUserUID: String? = nil
+    @Published var isLoading  = false
     @Published var errorMessage: String?
 
-    private let defaults = UserDefaults.standard
-    private enum Keys {
-        static let authed = "museummate_auth_isAuthenticated"
-        static let name = "museummate_auth_name"
-        static let email = "museummate_auth_email"
-    }
+    private var authListener: AuthStateDidChangeListenerHandle?
 
     init() {
-        isAuthenticated = defaults.bool(forKey: Keys.authed)
-        currentUserName = defaults.string(forKey: Keys.name) ?? ""
-        currentUserEmail = defaults.string(forKey: Keys.email) ?? ""
+        authListener = Auth.auth().addStateDidChangeListener { [weak self] _, user in
+            Task { @MainActor [weak self] in
+                guard let self else { return }
+                self.isAuthenticated   = user != nil
+                self.currentUserName   = user?.displayName ?? user?.email?.components(separatedBy: "@").first ?? ""
+                self.currentUserEmail  = user?.email ?? ""
+                self.currentUserUID    = user?.uid
+            }
+        }
     }
 
-    // MARK: - Email / password (stubbed)
+    deinit {
+        if let listener = authListener {
+            Auth.auth().removeStateDidChangeListener(listener)
+        }
+    }
+
+    // MARK: - Email / Password
 
     func signIn(email: String, password: String) async {
         errorMessage = nil
         guard validate(email: email, password: password) else { return }
         isLoading = true
-        // Simulate network latency.
-        try? await Task.sleep(nanoseconds: 800_000_000)
-        // TODO: Firebase — replace with Auth.auth().signIn(withEmail:password:).
-        finishLogin(name: nameFromEmail(email), email: email)
+        do {
+            try await Auth.auth().signIn(withEmail: email, password: password)
+        } catch {
+            errorMessage = firebaseMessage(error)
+        }
         isLoading = false
     }
 
     func signUp(name: String, email: String, password: String) async {
         errorMessage = nil
-        guard !name.trimmingCharacters(in: .whitespaces).isEmpty else {
+        let trimmedName = name.trimmingCharacters(in: .whitespaces)
+        guard !trimmedName.isEmpty else {
             errorMessage = "Please enter your name."
             return
         }
         guard validate(email: email, password: password) else { return }
         isLoading = true
-        try? await Task.sleep(nanoseconds: 800_000_000)
-        // TODO: Firebase — replace with Auth.auth().createUser(withEmail:password:).
-        finishLogin(name: name, email: email)
+        do {
+            let result = try await Auth.auth().createUser(withEmail: email, password: password)
+            let changeRequest = result.user.createProfileChangeRequest()
+            changeRequest.displayName = trimmedName
+            try await changeRequest.commitChanges()
+        } catch {
+            errorMessage = firebaseMessage(error)
+        }
         isLoading = false
     }
+
+    // MARK: - Google Sign-In
 
     func signInWithGoogle() async {
         errorMessage = nil
         isLoading = true
-        try? await Task.sleep(nanoseconds: 800_000_000)
-        // TODO: Firebase — replace with GIDSignIn + Firebase credential exchange.
-        finishLogin(name: "Gallery Guest", email: "guest@museummate.app")
+        do {
+            guard let clientID = FirebaseApp.app()?.options.clientID else {
+                errorMessage = "Firebase is not configured."
+                isLoading = false
+                return
+            }
+            let config = GIDConfiguration(clientID: clientID)
+            GIDSignIn.sharedInstance.configuration = config
+
+            guard let windowScene = await UIApplication.shared.connectedScenes
+                .first(where: { $0.activationState == .foregroundActive }) as? UIWindowScene,
+                  let rootVC = await windowScene.windows.first?.rootViewController
+            else {
+                errorMessage = "Cannot present sign-in screen."
+                isLoading = false
+                return
+            }
+
+            let result = try await GIDSignIn.sharedInstance.signIn(withPresenting: rootVC)
+            guard let idToken = result.user.idToken?.tokenString else {
+                errorMessage = "Google sign-in failed."
+                isLoading = false
+                return
+            }
+            let credential = GoogleAuthProvider.credential(
+                withIDToken: idToken,
+                accessToken: result.user.accessToken.tokenString
+            )
+            try await Auth.auth().signIn(with: credential)
+        } catch {
+            if (error as NSError).code != GIDSignInError.canceled.rawValue {
+                errorMessage = firebaseMessage(error)
+            }
+        }
         isLoading = false
     }
 
+    // MARK: - Sign Out
+
     func signOut() {
-        // TODO: Firebase — call try? Auth.auth().signOut() and GIDSignIn.sharedInstance.signOut().
-        isAuthenticated = false
-        currentUserName = ""
-        currentUserEmail = ""
-        defaults.set(false, forKey: Keys.authed)
-        defaults.removeObject(forKey: Keys.name)
-        defaults.removeObject(forKey: Keys.email)
+        do {
+            try Auth.auth().signOut()
+            GIDSignIn.sharedInstance.signOut()
+        } catch {
+            errorMessage = firebaseMessage(error)
+        }
     }
 
     // MARK: - Helpers
-
-    private func finishLogin(name: String, email: String) {
-        currentUserName = name
-        currentUserEmail = email
-        isAuthenticated = true
-        defaults.set(true, forKey: Keys.authed)
-        defaults.set(name, forKey: Keys.name)
-        defaults.set(email, forKey: Keys.email)
-    }
 
     private func validate(email: String, password: String) -> Bool {
         guard email.contains("@"), email.contains(".") else {
@@ -100,8 +141,23 @@ final class AuthService: ObservableObject {
         return true
     }
 
-    private func nameFromEmail(_ email: String) -> String {
-        let handle = email.split(separator: "@").first.map(String.init) ?? "Visitor"
-        return handle.prefix(1).uppercased() + handle.dropFirst()
+    private func firebaseMessage(_ error: Error) -> String {
+        let code = (error as NSError).code
+        switch AuthErrorCode(rawValue: code) {
+        case .wrongPassword, .invalidCredential:
+            return "Incorrect email or password."
+        case .emailAlreadyInUse:
+            return "This email is already registered."
+        case .userNotFound:
+            return "No account found for this email."
+        case .networkError:
+            return "Network error. Check your connection."
+        case .tooManyRequests:
+            return "Too many attempts. Try again later."
+        case .weakPassword:
+            return "Password is too weak. Use at least 6 characters."
+        default:
+            return error.localizedDescription
+        }
     }
 }

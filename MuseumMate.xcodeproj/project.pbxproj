@@ -7,6 +7,10 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		0F26ADFF2FECF33600122655 /* FirebaseAuth in Frameworks */ = {isa = PBXBuildFile; productRef = 0F26ADFE2FECF33600122655 /* FirebaseAuth */; };
+		0F26AE012FECF33600122655 /* FirebaseDatabase in Frameworks */ = {isa = PBXBuildFile; productRef = 0F26AE002FECF33600122655 /* FirebaseDatabase */; };
+		0F26AE032FECF33600122655 /* FirebaseFirestore in Frameworks */ = {isa = PBXBuildFile; productRef = 0F26AE022FECF33600122655 /* FirebaseFirestore */; };
+		0F26AE052FECF33600122655 /* FirebaseStorage in Frameworks */ = {isa = PBXBuildFile; productRef = 0F26AE042FECF33600122655 /* FirebaseStorage */; };
 		0F2772012FDA58C400DEF486 /* MuseumMateApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0F2772002FDA58C400DEF486 /* MuseumMateApp.swift */; };
 		0F2772032FDA58C400DEF486 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0F2772022FDA58C400DEF486 /* ContentView.swift */; };
 		0F2772052FDA58C800DEF486 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 0F2772042FDA58C800DEF486 /* Assets.xcassets */; };
@@ -15,6 +19,7 @@
 		0F2772152FDA5B0000DEF486 /* View+Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0F2772122FDA5B0000DEF486 /* View+Extensions.swift */; };
 		0F2772162FDA5B0000DEF486 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 0F2772132FDA5B0000DEF486 /* PrivacyInfo.xcprivacy */; };
 		0F2F3BF22FE1853700E87EB6 /* ArtistClassifier.mlproj in Resources */ = {isa = PBXBuildFile; fileRef = 0F2F3BF12FE1853700E87EB6 /* ArtistClassifier.mlproj */; };
+		0FAC00010000000000000001 /* ArtistClassifier.mlmodel in Resources */ = {isa = PBXBuildFile; fileRef = 0FAC00020000000000000001 /* ArtistClassifier.mlmodel */; };
 		0FF200010000000000000000 /* ArtStyle.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0FF100010000000000000000 /* ArtStyle.swift */; };
 		0FF200020000000000000000 /* Artwork.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0FF100020000000000000000 /* Artwork.swift */; };
 		0FF200030000000000000000 /* ScanResult.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0FF100030000000000000000 /* ScanResult.swift */; };
@@ -58,9 +63,6 @@
 		0FF2004F0000000000000000 /* CollectionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0FF1004F0000000000000000 /* CollectionView.swift */; };
 		0FF200500000000000000000 /* MemoriesView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0FF100500000000000000000 /* MemoriesView.swift */; };
 		0FF200510000000000000000 /* MemoryDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0FF100510000000000000000 /* MemoryDetailView.swift */; };
-		0FF2FF040000000000000000 /* UnifiedScanViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0FF1FF040000000000000000 /* UnifiedScanViewModel.swift */; };
-		0FF2FF050000000000000000 /* UnifiedScanView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0FF1FF050000000000000000 /* UnifiedScanView.swift */; };
-		0FF2FF060000000000000000 /* Secrets.plist in Resources */ = {isa = PBXBuildFile; fileRef = 0FF1FF060000000000000000 /* Secrets.plist */; };
 		0FF200520000000000000000 /* ArtistProfile.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0FF100520000000000000000 /* ArtistProfile.swift */; };
 		0FF200530000000000000000 /* ArtworkDetailService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0FF100530000000000000000 /* ArtworkDetailService.swift */; };
 		0FF200540000000000000000 /* ArtistImageService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0FF100540000000000000000 /* ArtistImageService.swift */; };
@@ -69,6 +71,13 @@
 		0FF200570000000000000000 /* CustomTabBar.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0FF100570000000000000000 /* CustomTabBar.swift */; };
 		0FF200580000000000000000 /* ArtistDiscoveryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0FF100580000000000000000 /* ArtistDiscoveryView.swift */; };
 		0FF200590000000000000000 /* ProfileSetupView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0FF100590000000000000000 /* ProfileSetupView.swift */; };
+		0FF2005A0000000000000000 /* VoiceSearchService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0FF1005A0000000000000000 /* VoiceSearchService.swift */; };
+		0FF2005B0000000000000000 /* AmbientAudioService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0FF1005B0000000000000000 /* AmbientAudioService.swift */; };
+		0FF2005C0000000000000000 /* SoundEffectService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0FF1005C0000000000000000 /* SoundEffectService.swift */; };
+		0FF2FF040000000000000000 /* UnifiedScanViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0FF1FF040000000000000000 /* UnifiedScanViewModel.swift */; };
+		0FF2FF050000000000000000 /* UnifiedScanView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0FF1FF050000000000000000 /* UnifiedScanView.swift */; };
+		0FF2FF060000000000000000 /* Secrets.plist in Resources */ = {isa = PBXBuildFile; fileRef = 0FF1FF060000000000000000 /* Secrets.plist */; };
+		0FML00020000000000000001 /* ArtStyleClassifier.mlpackage in Resources */ = {isa = PBXBuildFile; fileRef = 0FML00010000000000000001 /* ArtStyleClassifier.mlpackage */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -83,6 +92,7 @@
 		0F2772122FDA5B0000DEF486 /* View+Extensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "View+Extensions.swift"; sourceTree = "<group>"; };
 		0F2772132FDA5B0000DEF486 /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; lastKnownFileType = text.xml; path = PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
 		0F2F3BF12FE1853700E87EB6 /* ArtistClassifier.mlproj */ = {isa = PBXFileReference; lastKnownFileType = wrapper; path = ArtistClassifier.mlproj; sourceTree = "<group>"; };
+		0FAC00020000000000000001 /* ArtistClassifier.mlmodel */ = {isa = PBXFileReference; lastKnownFileType = file.mlmodel; path = ArtistClassifier.mlmodel; sourceTree = "<group>"; };
 		0FF100010000000000000000 /* ArtStyle.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ArtStyle.swift; sourceTree = "<group>"; };
 		0FF100020000000000000000 /* Artwork.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Artwork.swift; sourceTree = "<group>"; };
 		0FF100030000000000000000 /* ScanResult.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScanResult.swift; sourceTree = "<group>"; };
@@ -126,9 +136,6 @@
 		0FF1004F0000000000000000 /* CollectionView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CollectionView.swift; sourceTree = "<group>"; };
 		0FF100500000000000000000 /* MemoriesView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MemoriesView.swift; sourceTree = "<group>"; };
 		0FF100510000000000000000 /* MemoryDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MemoryDetailView.swift; sourceTree = "<group>"; };
-		0FF1FF040000000000000000 /* UnifiedScanViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UnifiedScanViewModel.swift; sourceTree = "<group>"; };
-		0FF1FF050000000000000000 /* UnifiedScanView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UnifiedScanView.swift; sourceTree = "<group>"; };
-		0FF1FF060000000000000000 /* Secrets.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Secrets.plist; sourceTree = "<group>"; };
 		0FF100520000000000000000 /* ArtistProfile.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ArtistProfile.swift; sourceTree = "<group>"; };
 		0FF100530000000000000000 /* ArtworkDetailService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ArtworkDetailService.swift; sourceTree = "<group>"; };
 		0FF100540000000000000000 /* ArtistImageService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ArtistImageService.swift; sourceTree = "<group>"; };
@@ -137,6 +144,13 @@
 		0FF100570000000000000000 /* CustomTabBar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CustomTabBar.swift; sourceTree = "<group>"; };
 		0FF100580000000000000000 /* ArtistDiscoveryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ArtistDiscoveryView.swift; sourceTree = "<group>"; };
 		0FF100590000000000000000 /* ProfileSetupView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfileSetupView.swift; sourceTree = "<group>"; };
+		0FF1005A0000000000000000 /* VoiceSearchService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VoiceSearchService.swift; sourceTree = "<group>"; };
+		0FF1005B0000000000000000 /* AmbientAudioService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AmbientAudioService.swift; sourceTree = "<group>"; };
+		0FF1005C0000000000000000 /* SoundEffectService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SoundEffectService.swift; sourceTree = "<group>"; };
+		0FF1FF040000000000000000 /* UnifiedScanViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UnifiedScanViewModel.swift; sourceTree = "<group>"; };
+		0FF1FF050000000000000000 /* UnifiedScanView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UnifiedScanView.swift; sourceTree = "<group>"; };
+		0FF1FF060000000000000000 /* Secrets.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Secrets.plist; sourceTree = "<group>"; };
+		0FML00010000000000000001 /* ArtStyleClassifier.mlpackage */ = {isa = PBXFileReference; lastKnownFileType = wrapper.mlpackage; path = ArtStyleClassifier.mlpackage; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -144,6 +158,10 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				0F26AE012FECF33600122655 /* FirebaseDatabase in Frameworks */,
+				0F26AE052FECF33600122655 /* FirebaseStorage in Frameworks */,
+				0F26ADFF2FECF33600122655 /* FirebaseAuth in Frameworks */,
+				0F26AE032FECF33600122655 /* FirebaseFirestore in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -241,6 +259,9 @@
 				0FF100530000000000000000 /* ArtworkDetailService.swift */,
 				0FF100540000000000000000 /* ArtistImageService.swift */,
 				0FF100550000000000000000 /* ArtistInfoService.swift */,
+				0FF1005A0000000000000000 /* VoiceSearchService.swift */,
+				0FF1005B0000000000000000 /* AmbientAudioService.swift */,
+				0FF1005C0000000000000000 /* SoundEffectService.swift */,
 			);
 			path = Services;
 			sourceTree = "<group>";
@@ -350,6 +371,8 @@
 			isa = PBXGroup;
 			children = (
 				0F2772132FDA5B0000DEF486 /* PrivacyInfo.xcprivacy */,
+				0FML00010000000000000001 /* ArtStyleClassifier.mlpackage */,
+				0FAC00020000000000000001 /* ArtistClassifier.mlmodel */,
 			);
 			path = Resources;
 			sourceTree = "<group>";
@@ -406,6 +429,10 @@
 			);
 			name = MuseumMate;
 			packageProductDependencies = (
+				0F26ADFE2FECF33600122655 /* FirebaseAuth */,
+				0F26AE002FECF33600122655 /* FirebaseDatabase */,
+				0F26AE022FECF33600122655 /* FirebaseFirestore */,
+				0F26AE042FECF33600122655 /* FirebaseStorage */,
 			);
 			productName = MuseumMate;
 			productReference = 0F2771FD2FDA58C400DEF486 /* MuseumMate.app */;
@@ -436,6 +463,7 @@
 			);
 			mainGroup = 0F2771F42FDA58C400DEF486;
 			packageReferences = (
+				0F26ADFD2FECF33600122655 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */,
 			);
 			productRefGroup = 0F2771FE2FDA58C400DEF486 /* Products */;
 			projectDirPath = "";
@@ -456,6 +484,8 @@
 				0F2772052FDA58C800DEF486 /* Assets.xcassets in Resources */,
 				0F2772162FDA5B0000DEF486 /* PrivacyInfo.xcprivacy in Resources */,
 				0FF2FF060000000000000000 /* Secrets.plist in Resources */,
+				0FML00020000000000000001 /* ArtStyleClassifier.mlpackage in Resources */,
+				0FAC00010000000000000001 /* ArtistClassifier.mlmodel in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -491,6 +521,9 @@
 				0FF200530000000000000000 /* ArtworkDetailService.swift in Sources */,
 				0FF200540000000000000000 /* ArtistImageService.swift in Sources */,
 				0FF200550000000000000000 /* ArtistInfoService.swift in Sources */,
+				0FF2005A0000000000000000 /* VoiceSearchService.swift in Sources */,
+				0FF2005B0000000000000000 /* AmbientAudioService.swift in Sources */,
+				0FF2005C0000000000000000 /* SoundEffectService.swift in Sources */,
 				0FF200560000000000000000 /* ArtistDiscoveryViewModel.swift in Sources */,
 				0FF200570000000000000000 /* CustomTabBar.swift in Sources */,
 				0FF200580000000000000000 /* ArtistDiscoveryView.swift in Sources */,
@@ -715,6 +748,40 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		0F26ADFD2FECF33600122655 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/firebase/firebase-ios-sdk";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 10.0.0;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		0F26ADFE2FECF33600122655 /* FirebaseAuth */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 0F26ADFD2FECF33600122655 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseAuth;
+		};
+		0F26AE002FECF33600122655 /* FirebaseDatabase */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 0F26ADFD2FECF33600122655 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseDatabase;
+		};
+		0F26AE022FECF33600122655 /* FirebaseFirestore */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 0F26ADFD2FECF33600122655 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseFirestore;
+		};
+		0F26AE042FECF33600122655 /* FirebaseStorage */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 0F26ADFD2FECF33600122655 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseStorage;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = 0F2771F52FDA58C400DEF486 /* Project object */;
 }

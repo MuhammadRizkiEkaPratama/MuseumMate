@@ -12,6 +12,7 @@
 import SwiftUI
 import Combine
 import Photos
+import AudioToolbox
 
 @MainActor
 final class UnifiedScanViewModel: ObservableObject {
@@ -67,7 +68,7 @@ final class UnifiedScanViewModel: ObservableObject {
     // MARK: - Collaborators
 
     let camera = CameraService()
-    let classifier = ArtistClassifierService()
+    let classifier = ArtStyleClassifierService()
     let recents = RecentPhotosLoader()
     private let vision = VisionService()
     private let artworkDetail = ArtworkDetailService()
@@ -132,7 +133,7 @@ final class UnifiedScanViewModel: ObservableObject {
         isProcessingFrame = true
         await classifier.classify(cgImage: cgImage)   // runs off the main actor
         detectedArtist = classifier.detectedArtist == "unknown" ? "—" : classifier.detectedArtist
-        styleConfidence = classifier.confidence
+        styleConfidence = classifier.artistConfidence
         isProcessingFrame = false
     }
 
@@ -166,7 +167,7 @@ final class UnifiedScanViewModel: ObservableObject {
             await classifier.classify(cgImage: cgImage)
         }
         let localArtist = classifier.detectedArtist
-        let localConfidence = classifier.confidence
+        let localConfidence = classifier.artistConfidence
 
         // Persist the image to disk (full + thumbnail).
         let saved = ImageStore.save(image)
@@ -209,10 +210,12 @@ final class UnifiedScanViewModel: ObservableObject {
             scanPhase = .failed(failureMessage ?? "Couldn't identify this artwork.")
             errorMessage = failureMessage ?? "Couldn't identify this artwork."
             Haptics.notification(.error)
+            SoundEffect.error()
             scheduleErrorDismiss()
         } else {
             scanPhase = .complete
             Haptics.notification(.success)
+            SoundEffect.scanSuccess()
         }
     }
 

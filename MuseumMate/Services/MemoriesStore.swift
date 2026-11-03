@@ -2,69 +2,132 @@
 //  MemoriesStore.swift
 //  MuseumMate
 //
-//  Museum-visit photos persisted to UserDefaults. Image files live in the
-//  Documents directory (via ImageStore). Firestore sync is Phase 8 work.
+//  Museum-visit photos: UserDefaults (offline) + Firestore (cloud sync).
+//  REQUIRES: firebase-ios-sdk (FirebaseFirestore) SPM packages.
 //
 
 import Foundation
+import FirebaseFirestore
 
 @MainActor
 final class MemoriesStore: ObservableObject {
     @Published private(set) var memories: [MemoryPhoto] = []
 
-    private let key = "museummate_memories_v1"
+    private let localKey = "museummate_memories_v1"
     private let defaults = UserDefaults.standard
-
-    // TODO: Firebase — sync memories to Firestore in Phase 8.
+    private let db       = Firestore.firestore()
+    private var uid: String?
+    private var firestoreListener: ListenerRegistration?
 
     init() {
-        load()
+        loadFromLocal()
     }
 
-    func load() {
-        guard
-            let data = defaults.data(forKey: key),
-            let decoded = try? JSONDecoder().decode([MemoryPhoto].self, from: data)
-        else { return }
-        memories = decoded.sorted { $0.dateTaken > $1.dateTaken }
+    deinit {
+        firestoreListener?.remove()
     }
 
-    private func persist() {
-        if let data = try? JSONEncoder().encode(memories) {
-            defaults.set(data, forKey: key)
-        }
+    func connectFirestore(uid: String) {
+        guard self.uid != uid else { return }
+        self.uid = uid
+        firestoreListener?.remove()
+        firestoreListener = db.collection("users").document(uid)
+            .collection("memories")
+            .order(by: "dateTaken", descending: true)
+            .addSnapshotListener { [weak self] snapshot, error in
+                guard let self, let docs = snapshot?.documents, error == nil else { return }
+                Task { @MainActor in
+                    let decoded = docs.compactMap { doc -> MemoryPhoto? in
+                        guard let data = try? JSONSerialization.data(withJSONObject: doc.data()),
+                              let mem = try? JSONDecoder().decode(MemoryPhoto.self, from: data)
+                        else { return nil }
+                        return mem
+                    }
+                    self.memories = decoded.sorted { $0.dateTaken > $1.dateTaken }
+                    self.persistLocal()
+                }
+            }
     }
+
+    func disconnectFirestore() {
+        firestoreListener?.remove()
+        firestoreListener = nil
+        uid = nil
+    }
+
+    // MARK: - Mutations
 
     func save(_ photo: MemoryPhoto) {
         memories.insert(photo, at: 0)
         memories.sort { $0.dateTaken > $1.dateTaken }
-        persist()
+        persistLocal()
+        if let uid { Task { await syncToFirestore(photo, uid: uid) } }
     }
 
     func update(_ photo: MemoryPhoto) {
         guard let index = memories.firstIndex(where: { $0.id == photo.id }) else { return }
         memories[index] = photo
-        persist()
+        persistLocal()
+        if let uid { Task { await syncToFirestore(photo, uid: uid) } }
     }
 
     func delete(_ photo: MemoryPhoto) {
         memories.removeAll { $0.id == photo.id }
         ImageStore.deleteImage(named: photo.imageFileName)
-        persist()
+        persistLocal()
+        if let uid {
+            db.collection("users").document(uid)
+                .collection("memories").document(photo.id.uuidString)
+                .delete()
+        }
     }
 
     func link(memoryID: UUID, to scanResultID: UUID, title: String) {
         guard let index = memories.firstIndex(where: { $0.id == memoryID }) else { return }
         memories[index].linkedScanResultID = scanResultID
         memories[index].linkedScanTitle = title
-        persist()
+        persistLocal()
+        if let uid { Task { await syncToFirestore(memories[index], uid: uid) } }
     }
 
     func unlink(memoryID: UUID) {
         guard let index = memories.firstIndex(where: { $0.id == memoryID }) else { return }
         memories[index].linkedScanResultID = nil
         memories[index].linkedScanTitle = nil
-        persist()
+        persistLocal()
+        if let uid { Task { await syncToFirestore(memories[index], uid: uid) } }
+    }
+
+    // MARK: - Local cache
+
+    private func loadFromLocal() {
+        guard
+            let data = defaults.data(forKey: localKey),
+            let decoded = try? JSONDecoder().decode([MemoryPhoto].self, from: data)
+        else { return }
+        memories = decoded.sorted { $0.dateTaken > $1.dateTaken }
+    }
+
+    private func persistLocal() {
+        if let data = try? JSONEncoder().encode(memories) {
+            defaults.set(data, forKey: localKey)
+        }
+    }
+
+    // MARK: - Firestore
+
+    private func syncToFirestore(_ photo: MemoryPhoto, uid: String) async {
+        guard let data = try? JSONEncoder().encode(photo),
+              let dict = try? JSONSerialization.jsonObject(with: data) as? [String: Any]
+        else { return }
+        try? await db.collection("users").document(uid)
+            .collection("memories").document(photo.id.uuidString)
+            .setData(dict, merge: true)
+    }
+
+    func clearLocalData() {
+        memories = []
+        defaults.removeObject(forKey: localKey)
     }
 
     var count: Int { memories.count }

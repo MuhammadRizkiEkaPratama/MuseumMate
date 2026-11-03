@@ -3,17 +3,39 @@
 //  MuseumMate
 //
 //  Past scans as a clean gallery-catalog list. Grouped by recency once
-//  there are enough entries. Swipe to delete, with confirmation.
+//  there are enough entries. Swipe to delete with confirmation.
+//  Opsi 5: Voice search — tap the mic button in the nav bar to speak a
+//  title or artist name; results filter in real time.
 //
 
 import SwiftUI
+import Speech
 
 struct HistoryView: View {
     @EnvironmentObject private var historyStore: ScanHistoryStore
+    @StateObject private var voiceSearch = VoiceSearchService()
     @State private var pendingDelete: ScanResult?
+    @State private var searchText = ""
+
+    // Filtered scans: voice transcript overrides manual text when mic is active
+    private var activeQuery: String {
+        voiceSearch.isListening || !voiceSearch.transcript.isEmpty
+            ? voiceSearch.transcript
+            : searchText
+    }
+
+    private var filteredScans: [ScanResult] {
+        let q = activeQuery.trimmingCharacters(in: .whitespaces).lowercased()
+        guard !q.isEmpty else { return historyStore.scans }
+        return historyStore.scans.filter {
+            $0.displayTitle.lowercased().contains(q)
+            || ($0.artwork?.artist.lowercased().contains(q) ?? false)
+            || $0.displayStyle.lowercased().contains(q)
+        }
+    }
 
     private var sections: [HistorySection] {
-        HistorySection.group(historyStore.scans)
+        HistorySection.group(filteredScans)
     }
 
     var body: some View {
@@ -21,18 +43,36 @@ struct HistoryView: View {
             ZStack {
                 Color.appBackground.ignoresSafeArea()
 
-                if historyStore.scans.isEmpty {
-                    EmptyStateView(
-                        symbol: "photo.artframe",
-                        message: "Your discoveries will live here."
-                    )
-                } else {
-                    list
+                VStack(spacing: 0) {
+                    // Voice search status strip
+                    if voiceSearch.isListening || !voiceSearch.transcript.isEmpty {
+                        voiceSearchStrip
+                            .transition(.move(edge: .top).combined(with: .opacity))
+                    }
+
+                    if historyStore.scans.isEmpty {
+                        EmptyStateView(
+                            symbol: "photo.artframe",
+                            message: "Your discoveries will live here."
+                        )
+                    } else if filteredScans.isEmpty {
+                        EmptyStateView(
+                            symbol: "magnifyingglass",
+                            message: "No scans match \"\(activeQuery)\"."
+                        )
+                    } else {
+                        list
+                    }
                 }
             }
             .navigationTitle("History")
             .toolbarBackground(Color.appBackground, for: .navigationBar)
             .toolbarColorScheme(.dark, for: .navigationBar)
+            .toolbar {
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    micButton
+                }
+            }
             .confirmationDialog(
                 "Delete this scan?",
                 isPresented: deleteBinding,
@@ -49,8 +89,107 @@ struct HistoryView: View {
             } message: {
                 Text("This removes the scan and its saved image.")
             }
+            .task {
+                if voiceSearch.authStatus == .notDetermined {
+                    await voiceSearch.requestPermissions()
+                }
+            }
+            // Keep searchText in sync when transcript updates
+            .onChange(of: voiceSearch.transcript) { newValue in
+                searchText = newValue
+            }
         }
     }
+
+    // MARK: - Mic button
+
+    private var micButton: some View {
+        Button {
+            withAnimation(.museumSpring) {
+                if voiceSearch.isListening {
+                    voiceSearch.stopListening()
+                } else {
+                    voiceSearch.clear()
+                    voiceSearch.startListening()
+                    Haptics.tap()
+                }
+            }
+        } label: {
+            Image(systemName: voiceSearch.isListening ? "mic.fill" : "mic")
+                .font(.system(size: 17, weight: .medium))
+                .foregroundStyle(voiceSearch.isListening ? Color.appAccent : Color.appTextSecondary)
+                .frame(width: 36, height: 36)
+                .background(
+                    Circle().fill(
+                        voiceSearch.isListening
+                            ? Color.appAccent.opacity(0.15)
+                            : Color.appSurface
+                    )
+                )
+        }
+        .buttonStyle(.pressable)
+        .disabled(voiceSearch.authStatus == .denied || voiceSearch.authStatus == .restricted)
+        .accessibilityLabel(voiceSearch.isListening ? "Stop voice search" : "Voice search")
+    }
+
+    // MARK: - Voice search strip
+
+    private var voiceSearchStrip: some View {
+        HStack(spacing: 10) {
+            if voiceSearch.isListening {
+                // Animated listening indicator
+                HStack(spacing: 4) {
+                    ForEach(0..<3, id: \.self) { i in
+                        RoundedRectangle(cornerRadius: 2)
+                            .fill(Color.appAccent)
+                            .frame(width: 3, height: CGFloat.random(in: 8...18))
+                            .animation(
+                                .easeInOut(duration: 0.5)
+                                    .repeatForever()
+                                    .delay(Double(i) * 0.15),
+                                value: voiceSearch.isListening
+                            )
+                    }
+                }
+                .frame(width: 20, height: 20)
+            } else {
+                Image(systemName: "checkmark.circle.fill")
+                    .font(.caption)
+                    .foregroundStyle(Color.appAccent)
+            }
+
+            Text(voiceSearch.isListening
+                 ? (voiceSearch.transcript.isEmpty ? "Listening\u{2026}" : voiceSearch.transcript)
+                 : "\"\(voiceSearch.transcript)\"")
+                .font(.subheadline)
+                .foregroundStyle(Color.appTextPrimary)
+                .lineLimit(1)
+
+            Spacer()
+
+            Button {
+                withAnimation(.museumSpring) {
+                    voiceSearch.stopListening()
+                    voiceSearch.clear()
+                    searchText = ""
+                }
+            } label: {
+                Image(systemName: "xmark.circle.fill")
+                    .foregroundStyle(Color.appTextMuted)
+            }
+        }
+        .padding(.horizontal, 20)
+        .padding(.vertical, 10)
+        .background(Color.appSurface)
+        .overlay(
+            Rectangle()
+                .fill(Color.appAccent.opacity(0.3))
+                .frame(height: 1),
+            alignment: .bottom
+        )
+    }
+
+    // MARK: - List
 
     private var list: some View {
         List {
@@ -158,7 +297,6 @@ private struct HistorySection: Identifiable {
     let title: String
     let items: [ScanResult]
 
-    /// Buckets by recency only when there are more than five scans.
     static func group(_ scans: [ScanResult]) -> [HistorySection] {
         guard scans.count > 5 else {
             return scans.isEmpty ? [] : [HistorySection(title: "All", items: scans)]
@@ -167,13 +305,14 @@ private struct HistorySection: Identifiable {
         let calendar = Calendar.current
         let now = Date()
         var today: [ScanResult] = []
-        var week: [ScanResult] = []
+        var week:  [ScanResult] = []
         var earlier: [ScanResult] = []
 
         for scan in scans {
             if calendar.isDateInToday(scan.date) {
                 today.append(scan)
-            } else if let days = calendar.dateComponents([.day], from: scan.date, to: now).day, days < 7 {
+            } else if let days = calendar.dateComponents([.day], from: scan.date, to: now).day,
+                      days < 7 {
                 week.append(scan)
             } else {
                 earlier.append(scan)
@@ -181,9 +320,9 @@ private struct HistorySection: Identifiable {
         }
 
         var result: [HistorySection] = []
-        if !today.isEmpty { result.append(HistorySection(title: "Today", items: today)) }
-        if !week.isEmpty { result.append(HistorySection(title: "This Week", items: week)) }
-        if !earlier.isEmpty { result.append(HistorySection(title: "Earlier", items: earlier)) }
+        if !today.isEmpty   { result.append(HistorySection(title: "Today",     items: today)) }
+        if !week.isEmpty    { result.append(HistorySection(title: "This Week", items: week)) }
+        if !earlier.isEmpty { result.append(HistorySection(title: "Earlier",   items: earlier)) }
         return result
     }
 }

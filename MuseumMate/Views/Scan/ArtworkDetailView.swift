@@ -3,16 +3,53 @@
 //  MuseumMate
 //
 //  Premium catalog detail: tall hero with glass action buttons, artist portrait
-//  inset from Wikipedia, metadata column, expandable history, love poems, and
-//  artist story — a museum-quality reading experience.
+//  overlay, metadata column, expandable history, fun facts with audio playback,
+//  ambient music per art movement, love poems, and artist story.
 //
 
 import SwiftUI
+import AVFoundation
+
+// MARK: - Fun fact speaker (AVSpeechSynthesizer wrapper)
+
+private final class FactSpeaker: NSObject, ObservableObject, AVSpeechSynthesizerDelegate {
+    @Published var speakingIndex: Int? = nil
+    private let synth = AVSpeechSynthesizer()
+
+    override init() {
+        super.init()
+        synth.delegate = self
+    }
+
+    func speak(_ text: String, index: Int) {
+        if synth.isSpeaking { synth.stopSpeaking(at: .immediate) }
+        speakingIndex = index
+        let utt = AVSpeechUtterance(string: text)
+        utt.voice = AVSpeechSynthesisVoice(language: "en-US")
+        utt.rate = 0.48
+        utt.pitchMultiplier = 1.05
+        synth.speak(utt)
+    }
+
+    func stop() {
+        synth.stopSpeaking(at: .immediate)
+        speakingIndex = nil
+    }
+
+    func speechSynthesizer(_ synthesizer: AVSpeechSynthesizer,
+                           didFinish utterance: AVSpeechUtterance) {
+        speakingIndex = nil
+    }
+}
+
+// MARK: - Main view
 
 struct ArtworkDetailView: View {
     let result: ScanResult
 
     @EnvironmentObject private var historyStore: ScanHistoryStore
+    @EnvironmentObject private var ambientAudio: AmbientAudioService
+    @StateObject private var speaker = FactSpeaker()
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     @State private var image: UIImage?
@@ -30,11 +67,17 @@ struct ArtworkDetailView: View {
         historyStore.scans.first { $0.id == result.id }?.isFavorite ?? result.isFavorite
     }
 
+    // The movement used for ambient audio lookup
+    private var artMovement: String {
+        artwork?.style.isEmpty == false ? artwork!.style :
+        (detectedArtistInfo?.movement ?? result.localArtist)
+    }
+
     var body: some View {
         ScrollView(showsIndicators: false) {
             VStack(alignment: .leading, spacing: 0) {
+                // Hero: no entrance animation — it anchors the page visually
                 heroSection
-                    .fadeSlideIn()
 
                 VStack(alignment: .leading, spacing: 26) {
                     detailSectionsTop
@@ -55,61 +98,63 @@ struct ArtworkDetailView: View {
             withAnimation(reduceMotion ? nil : .easeOut(duration: 0.8)) {
                 confidenceFill = confidence
             }
-            // Load Wikipedia portrait for the artist.
             if let artistName = artwork?.artist ?? detectedArtistInfo?.name {
                 artistPortraitURL = await ArtistImageService().fetchPortraitURL(for: artistName)
             }
         }
+        .onDisappear {
+            speaker.stop()
+            ambientAudio.stopPlayback()
+        }
     }
 
-    // MARK: - Body sections (split to stay under the ViewBuilder 10-child limit)
+    // MARK: - Body section splits (ViewBuilder 10-child limit)
 
     @ViewBuilder
     private var detailSectionsTop: some View {
         identityCard
-            .fadeSlideIn(delay: 0.06)
+            .fadeSlideIn(delay: 0.04)
         metadataGrid
-            .fadeSlideIn(delay: 0.10)
+            .fadeSlideIn(delay: 0.08)
         confidenceSection
-            .fadeSlideIn(delay: 0.14)
+            .fadeSlideIn(delay: 0.12)
         descriptionSection
-            .fadeSlideIn(delay: 0.18)
+            .fadeSlideIn(delay: 0.16)
         shortHistorySection
-            .fadeSlideIn(delay: 0.22)
+            .fadeSlideIn(delay: 0.20)
         creationStorySection
-            .fadeSlideIn(delay: 0.26)
+            .fadeSlideIn(delay: 0.24)
     }
 
     @ViewBuilder
     private var detailSectionsBottom: some View {
         quoteSection
-            .fadeSlideIn(delay: 0.30)
+            .fadeSlideIn(delay: 0.28)
         funFactsCard
-            .fadeSlideIn(delay: 0.34)
+            .fadeSlideIn(delay: 0.32)
         lovePoemsSection
-            .fadeSlideIn(delay: 0.38)
+            .fadeSlideIn(delay: 0.36)
         romanticLineSection
-            .fadeSlideIn(delay: 0.42)
+            .fadeSlideIn(delay: 0.40)
         artistStorySection
-            .fadeSlideIn(delay: 0.46)
+            .fadeSlideIn(delay: 0.44)
         actionBar
-            .fadeSlideIn(delay: 0.50)
+            .fadeSlideIn(delay: 0.48)
     }
 
-    // MARK: - Hero (55% screen height)
+    // MARK: - Hero (55 % of screen height, clipped to its own frame)
 
     @ViewBuilder
     private var heroSection: some View {
         let heroHeight = UIScreen.main.bounds.height * 0.55
 
         ZStack(alignment: .bottom) {
-            // Artwork image
             artworkHeroImage
                 .frame(height: heroHeight)
                 .frame(maxWidth: .infinity)
                 .clipped()
 
-            // Bottom gradient vignette
+            // Bottom vignette
             LinearGradient(
                 colors: [.clear, Color.appBackground.opacity(0.98)],
                 startPoint: .top,
@@ -119,37 +164,37 @@ struct ArtworkDetailView: View {
             .frame(maxWidth: .infinity)
             .allowsHitTesting(false)
 
-            // Glass action buttons + artist portrait inset
-            VStack(spacing: 0) {
-                HStack(alignment: .top) {
-                    // Artist portrait (bottom-left inset)
-                    artistPortraitInset
-
-                    Spacer()
-
-                    // Glass favorite + share buttons (top-right)
-                    HStack(spacing: 10) {
-                        glassButton(symbol: isFavorite ? "heart.fill" : "heart",
-                                    tint: isFavorite ? Color.appAccent : .white) {
-                            toggleFavorite()
-                        }
-                        glassButton(symbol: "square.and.arrow.up", tint: .white) {
-                            // ShareLink is handled separately below
-                        }
+            // Glass action buttons — top-right of the hero bottom area
+            HStack {
+                Spacer()
+                HStack(spacing: 10) {
+                    glassButton(symbol: isFavorite ? "heart.fill" : "heart",
+                                tint: isFavorite ? Color.appAccent : .white) {
+                        toggleFavorite()
                     }
+                    // Ambient music toggle
+                    glassButton(
+                        symbol: ambientAudio.isPlaying ? "music.note.list" : "music.note",
+                        tint: ambientAudio.isPlaying ? Color.appAccent : .white
+                    ) {
+                        ambientAudio.togglePlayback(forMovement: artMovement)
+                        Haptics.tap()
+                    }
+                    glassButton(symbol: "square.and.arrow.up", tint: .white) {}
                 }
-                .padding(.horizontal, 18)
-                .padding(.bottom, 14)
             }
+            .padding(.horizontal, 18)
+            .padding(.bottom, 14)
         }
         .frame(height: heroHeight)
-        // Overlay for share (ShareLink can't go inside a Button label easily in iOS 16)
+        .clipped()
+        // ShareLink hidden behind the share glass button area
         .overlay(alignment: .bottomTrailing) {
             ShareLink(item: shareText) {
                 Color.clear.frame(width: 44, height: 44)
             }
             .frame(width: 44, height: 44)
-            .padding(.trailing, 18)
+            .padding(.trailing, 66)  // sit behind the rightmost glass button
             .padding(.bottom, 14)
         }
     }
@@ -214,12 +259,37 @@ struct ArtworkDetailView: View {
         .scaleEffect(symbol.contains("heart") ? heartScale : 1)
     }
 
-    // MARK: - Identity
+    // MARK: - Identity card
 
     @ViewBuilder
     private var identityCard: some View {
         VStack(alignment: .leading, spacing: 12) {
-            artistBadge
+            // Portrait + detected artist badge inline — avoids hero z-order overlap bug
+            HStack(alignment: .center, spacing: 12) {
+                artistPortraitInset
+
+                VStack(alignment: .leading, spacing: 3) {
+                    Text("Detected Artist").sectionLabel()
+                    Text(detectedArtistInfo?.name ?? result.localArtist)
+                        .font(.subheadline.weight(.semibold))
+                        .foregroundStyle(accent)
+                    if let info = detectedArtistInfo {
+                        Text("\(info.nationality) · \(info.movement)")
+                            .font(.caption)
+                            .foregroundStyle(Color.appTextSecondary)
+                        Text("\(info.born)–\(info.died)")
+                            .font(.caption2)
+                            .foregroundStyle(Color.appTextMuted)
+                    }
+                }
+                Spacer(minLength: 0)
+            }
+            .padding(12)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .background(
+                RoundedRectangle(cornerRadius: 10, style: .continuous)
+                    .fill(accent.opacity(0.12))
+            )
 
             Text(result.displayTitle)
                 .font(.system(.largeTitle, design: .serif).weight(.regular))
@@ -245,45 +315,16 @@ struct ArtworkDetailView: View {
         .frame(maxWidth: .infinity, alignment: .leading)
     }
 
-    @ViewBuilder
-    private var artistBadge: some View {
-        HStack(alignment: .top, spacing: 10) {
-            Rectangle()
-                .fill(accent)
-                .frame(width: 3)
-                .cornerRadius(1.5)
-            VStack(alignment: .leading, spacing: 2) {
-                Text("Detected Artist").sectionLabel()
-                Text(detectedArtistInfo?.name ?? result.localArtist)
-                    .font(.subheadline.weight(.semibold))
-                    .foregroundStyle(accent)
-                if let info = detectedArtistInfo {
-                    Text("\(info.nationality) · \(info.movement)")
-                        .font(.caption)
-                        .foregroundStyle(Color.appTextSecondary)
-                    Text("\(info.born)–\(info.died)")
-                        .font(.caption2)
-                        .foregroundStyle(Color.appTextMuted)
-                }
-            }
-        }
-        .padding(12)
-        .background(
-            RoundedRectangle(cornerRadius: 10, style: .continuous)
-                .fill(accent.opacity(0.12))
-        )
-    }
-
     // MARK: - Metadata grid
 
     @ViewBuilder
     private var metadataGrid: some View {
-        if let artwork, artwork.year.isEmpty == false || artwork.medium.isEmpty == false {
+        if let artwork, !artwork.year.isEmpty || !artwork.medium.isEmpty {
             let items: [(String, String, String)] = [
-                ("calendar", "Year",     artwork.year),
-                ("paintbrush", "Medium", artwork.medium.isEmpty ? artwork.artStyle : artwork.medium),
-                ("tag",       "Style",   artwork.style.isEmpty ? artwork.artStyle : artwork.style),
-                ("building.columns", "Collection", artwork.exhibitionSince.isEmpty ? "" : "Since \(artwork.exhibitionSince)")
+                ("calendar",          "Year",       artwork.year),
+                ("paintbrush",        "Medium",     artwork.medium.isEmpty ? artwork.artStyle : artwork.medium),
+                ("tag",               "Style",      artwork.style.isEmpty  ? artwork.artStyle : artwork.style),
+                ("building.columns",  "Collection", artwork.exhibitionSince.isEmpty ? "" : "Since \(artwork.exhibitionSince)")
             ].filter { !$2.isEmpty }
 
             if !items.isEmpty {
@@ -313,16 +354,12 @@ struct ArtworkDetailView: View {
             Spacer(minLength: 0)
         }
         .padding(10)
-        .background(
-            RoundedRectangle(cornerRadius: 10, style: .continuous).fill(Color.appSurface)
-        )
-        .overlay(
-            RoundedRectangle(cornerRadius: 10, style: .continuous)
-                .strokeBorder(Color.white.opacity(0.05), lineWidth: 0.5)
-        )
+        .background(RoundedRectangle(cornerRadius: 10, style: .continuous).fill(Color.appSurface))
+        .overlay(RoundedRectangle(cornerRadius: 10, style: .continuous)
+            .strokeBorder(Color.white.opacity(0.05), lineWidth: 0.5))
     }
 
-    // MARK: - Confidence
+    // MARK: - Confidence bar
 
     @ViewBuilder
     private var confidenceSection: some View {
@@ -349,13 +386,17 @@ struct ArtworkDetailView: View {
         }
     }
 
-    // MARK: - Description
+    // MARK: - Description + "Listen" button (Opsi 6)
 
     @ViewBuilder
     private var descriptionSection: some View {
         if let description = artwork?.description, !description.isEmpty {
             VStack(alignment: .leading, spacing: 12) {
-                Text("About").sectionLabel()
+                HStack {
+                    Text("About").sectionLabel()
+                    Spacer()
+                    listenButton(text: description, index: -1)
+                }
                 Text(description)
                     .font(.system(size: 16))
                     .foregroundStyle(Color.appTextPrimary.opacity(0.92))
@@ -365,7 +406,7 @@ struct ArtworkDetailView: View {
         }
     }
 
-    // MARK: - Short history (expandable)
+    // MARK: - Short history
 
     @ViewBuilder
     private var shortHistorySection: some View {
@@ -396,13 +437,9 @@ struct ArtworkDetailView: View {
                 }
             }
             .padding(14)
-            .background(
-                RoundedRectangle(cornerRadius: 14, style: .continuous).fill(Color.appSurface)
-            )
-            .overlay(
-                RoundedRectangle(cornerRadius: 14, style: .continuous)
-                    .strokeBorder(Color.white.opacity(0.06), lineWidth: 0.5)
-            )
+            .background(RoundedRectangle(cornerRadius: 14, style: .continuous).fill(Color.appSurface))
+            .overlay(RoundedRectangle(cornerRadius: 14, style: .continuous)
+                .strokeBorder(Color.white.opacity(0.06), lineWidth: 0.5))
         }
     }
 
@@ -443,26 +480,35 @@ struct ArtworkDetailView: View {
                         .fixedSize(horizontal: false, vertical: true)
                 }
                 .padding(18)
-                .background(
-                    RoundedRectangle(cornerRadius: 14, style: .continuous).fill(Color.appSurface)
-                )
-                .overlay(
-                    RoundedRectangle(cornerRadius: 14, style: .continuous)
-                        .strokeBorder(accent.opacity(0.18), lineWidth: 0.5)
-                )
+                .background(RoundedRectangle(cornerRadius: 14, style: .continuous).fill(Color.appSurface))
+                .overlay(RoundedRectangle(cornerRadius: 14, style: .continuous)
+                    .strokeBorder(accent.opacity(0.18), lineWidth: 0.5))
             }
         }
     }
 
-    // MARK: - Fun facts
+    // MARK: - Fun facts with per-fact audio (Opsi 6)
 
     @ViewBuilder
     private var funFactsCard: some View {
         if let facts = artwork?.funFacts, !facts.isEmpty {
             VStack(alignment: .leading, spacing: 14) {
-                Text("Did You Know").sectionLabel()
+                HStack {
+                    Text("Did You Know").sectionLabel()
+                    Spacer()
+                    // Stop button when any fact is speaking
+                    if speaker.speakingIndex != nil {
+                        Button { speaker.stop() } label: {
+                            Label("Stop", systemImage: "stop.circle.fill")
+                                .font(.caption.weight(.semibold))
+                                .foregroundStyle(accent)
+                        }
+                        .buttonStyle(.pressable)
+                        .transition(.opacity)
+                    }
+                }
                 VStack(alignment: .leading, spacing: 12) {
-                    ForEach(Array(facts.enumerated()), id: \.offset) { _, fact in
+                    ForEach(Array(facts.enumerated()), id: \.offset) { idx, fact in
                         HStack(alignment: .top, spacing: 10) {
                             Text("—").foregroundStyle(accent)
                             Text(fact)
@@ -470,6 +516,8 @@ struct ArtworkDetailView: View {
                                 .foregroundStyle(Color.appTextSecondary)
                                 .lineSpacing(5)
                                 .fixedSize(horizontal: false, vertical: true)
+                            Spacer(minLength: 4)
+                            listenButton(text: fact, index: idx)
                         }
                     }
                 }
@@ -510,7 +558,7 @@ struct ArtworkDetailView: View {
         }
     }
 
-    // MARK: - Romantic line (legacy single line, shown if lovePoems absent)
+    // MARK: - Romantic line (legacy)
 
     @ViewBuilder
     private var romanticLineSection: some View {
@@ -544,13 +592,9 @@ struct ArtworkDetailView: View {
                     .buttonStyle(.pressable)
                 }
                 .padding(16)
-                .background(
-                    RoundedRectangle(cornerRadius: 14, style: .continuous).fill(Color.appSurface)
-                )
-                .overlay(
-                    RoundedRectangle(cornerRadius: 14, style: .continuous)
-                        .strokeBorder(accent.opacity(0.25), lineWidth: 0.5)
-                )
+                .background(RoundedRectangle(cornerRadius: 14, style: .continuous).fill(Color.appSurface))
+                .overlay(RoundedRectangle(cornerRadius: 14, style: .continuous)
+                    .strokeBorder(accent.opacity(0.25), lineWidth: 0.5))
             }
         }
     }
@@ -571,8 +615,7 @@ struct ArtworkDetailView: View {
                                     .clipShape(Circle())
                                     .overlay(Circle().strokeBorder(accent.opacity(0.4), lineWidth: 1))
                             } else {
-                                Circle().fill(accent.opacity(0.15))
-                                    .frame(width: 44, height: 44)
+                                Circle().fill(accent.opacity(0.15)).frame(width: 44, height: 44)
                             }
                         }
                     }
@@ -586,57 +629,94 @@ struct ArtworkDetailView: View {
         }
     }
 
-    // MARK: - Actions
+    // MARK: - Action bar (favorite + ambient music + share)
 
     @ViewBuilder
     private var actionBar: some View {
-        HStack(spacing: 14) {
-            Button {
-                toggleFavorite()
-            } label: {
+        VStack(spacing: 12) {
+            // Ambient music indicator strip (shown when playing)
+            if ambientAudio.isPlaying {
                 HStack(spacing: 8) {
-                    Image(systemName: isFavorite ? "heart.fill" : "heart")
-                        .scaleEffect(heartScale)
-                    Text(isFavorite ? "Saved" : "Save")
-                        .font(.subheadline.weight(.semibold))
+                    Image(systemName: "waveform")
+                        .font(.caption)
+                        .foregroundStyle(accent)
+                    Text("Playing: \(ambientAudio.currentMovement) ambience")
+                        .font(.caption)
+                        .foregroundStyle(Color.appTextSecondary)
+                    Spacer()
+                    Button { ambientAudio.stopPlayback() } label: {
+                        Image(systemName: "xmark.circle.fill")
+                            .font(.caption)
+                            .foregroundStyle(Color.appTextMuted)
+                    }
                 }
-                .foregroundStyle(isFavorite ? Color.appAccent : Color.appTextPrimary)
-                .frame(maxWidth: .infinity)
-                .frame(height: 52)
-                .background(
-                    RoundedRectangle(cornerRadius: 16, style: .continuous).fill(Color.appSurface)
-                )
-                .overlay(
-                    RoundedRectangle(cornerRadius: 16, style: .continuous)
-                        .strokeBorder(
-                            (isFavorite ? accent : Color.white).opacity(0.15),
-                            lineWidth: 0.5
-                        )
-                )
+                .padding(.horizontal, 14)
+                .padding(.vertical, 10)
+                .background(RoundedRectangle(cornerRadius: 12, style: .continuous).fill(Color.appSurface))
+                .transition(.opacity.combined(with: .move(edge: .bottom)))
             }
-            .buttonStyle(.pressable)
-            .accessibilityLabel(isFavorite ? "Remove from favorites" : "Add to favorites")
 
-            ShareLink(item: shareText) {
-                HStack(spacing: 8) {
-                    Image(systemName: "square.and.arrow.up")
-                    Text("Share")
-                        .font(.subheadline.weight(.semibold))
+            HStack(spacing: 14) {
+                // Favorite
+                Button { toggleFavorite() } label: {
+                    HStack(spacing: 8) {
+                        Image(systemName: isFavorite ? "heart.fill" : "heart")
+                            .scaleEffect(heartScale)
+                        Text(isFavorite ? "Saved" : "Save")
+                            .font(.subheadline.weight(.semibold))
+                    }
+                    .foregroundStyle(isFavorite ? Color.appAccent : Color.appTextPrimary)
+                    .frame(maxWidth: .infinity)
+                    .frame(height: 52)
+                    .background(RoundedRectangle(cornerRadius: 16, style: .continuous).fill(Color.appSurface))
+                    .overlay(RoundedRectangle(cornerRadius: 16, style: .continuous)
+                        .strokeBorder((isFavorite ? accent : Color.white).opacity(0.15), lineWidth: 0.5))
                 }
-                .foregroundStyle(Color.appTextPrimary)
-                .frame(maxWidth: .infinity)
-                .frame(height: 52)
-                .background(
-                    RoundedRectangle(cornerRadius: 16, style: .continuous).fill(Color.appSurface)
-                )
-                .overlay(
-                    RoundedRectangle(cornerRadius: 16, style: .continuous)
-                        .strokeBorder(Color.white.opacity(0.08), lineWidth: 0.5)
-                )
+                .buttonStyle(.pressable)
+                .accessibilityLabel(isFavorite ? "Remove from favorites" : "Add to favorites")
+
+                // Share
+                ShareLink(item: shareText) {
+                    HStack(spacing: 8) {
+                        Image(systemName: "square.and.arrow.up")
+                        Text("Share")
+                            .font(.subheadline.weight(.semibold))
+                    }
+                    .foregroundStyle(Color.appTextPrimary)
+                    .frame(maxWidth: .infinity)
+                    .frame(height: 52)
+                    .background(RoundedRectangle(cornerRadius: 16, style: .continuous).fill(Color.appSurface))
+                    .overlay(RoundedRectangle(cornerRadius: 16, style: .continuous)
+                        .strokeBorder(Color.white.opacity(0.08), lineWidth: 0.5))
+                }
+                .accessibilityLabel("Share artwork")
             }
-            .accessibilityLabel("Share artwork")
         }
     }
+
+    // MARK: - Listen button helper (Opsi 6)
+
+    private func listenButton(text: String, index: Int) -> some View {
+        let isSpeaking = speaker.speakingIndex == index
+        return Button {
+            if isSpeaking {
+                speaker.stop()
+            } else {
+                Haptics.tap()
+                speaker.speak(text, index: index)
+            }
+        } label: {
+            Image(systemName: isSpeaking ? "stop.fill" : "speaker.wave.2")
+                .font(.system(size: 12, weight: .medium))
+                .foregroundStyle(isSpeaking ? accent : Color.appTextMuted)
+                .frame(width: 32, height: 32)
+                .background(Circle().fill(isSpeaking ? accent.opacity(0.15) : Color.appSurfaceUp))
+        }
+        .buttonStyle(.pressable)
+        .accessibilityLabel(isSpeaking ? "Stop reading" : "Listen to this")
+    }
+
+    // MARK: - Helpers
 
     private var shareText: String {
         var parts = [result.displayTitle]
@@ -659,6 +739,7 @@ struct ArtworkDetailView_Previews: PreviewProvider {
         NavigationStack {
             ArtworkDetailView(result: .preview)
                 .environmentObject(ScanHistoryStore())
+                .environmentObject(AmbientAudioService())
         }
         .preferredColorScheme(.dark)
     }

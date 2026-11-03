@@ -114,6 +114,12 @@ final class ArtistDiscoveryViewModel: ObservableObject {
         selectArtist(artist)
     }
 
+    func resetBirthday() {
+        didLoadBirthday = false
+        birthdayArtist = nil
+        birthdayPortraitURL = nil
+    }
+
     // MARK: - Portraits
 
     func loadPortrait(for artist: Artist) async {

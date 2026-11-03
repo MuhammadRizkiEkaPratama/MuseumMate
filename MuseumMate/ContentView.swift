@@ -7,6 +7,7 @@
 //
 
 import SwiftUI
+import AudioToolbox
 
 enum AppTab: Hashable {
     case dashboard, scan, collection, artists, profile
@@ -43,6 +44,9 @@ struct ContentView: View {
         }
         .ignoresSafeArea(edges: .bottom)
         .background(Color.appBackground.ignoresSafeArea())
+        .onChange(of: selection) { _ in
+            SoundEffect.tabChange()
+        }
     }
 }
 
@@ -53,6 +57,7 @@ struct ContentView_Previews: PreviewProvider {
             .environmentObject(UserProfile())
             .environmentObject(ScanHistoryStore())
             .environmentObject(FavoritesStore())
+            .environmentObject(AmbientAudioService())
             .preferredColorScheme(.dark)
     }
 }

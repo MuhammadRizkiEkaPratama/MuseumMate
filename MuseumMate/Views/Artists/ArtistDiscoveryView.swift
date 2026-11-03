@@ -57,6 +57,12 @@ struct ArtistDiscoveryView: View {
             .onChange(of: viewModel.searchText) { newText in
                 viewModel.onSearchChanged(newText)
             }
+            .onChange(of: profile.birthDate) { newDate in
+                viewModel.resetBirthday()
+                if let bday = profile.birthdayMonthDay {
+                    Task { await viewModel.loadBirthdayArtist(month: bday.month, day: bday.day) }
+                }
+            }
         }
     }
 

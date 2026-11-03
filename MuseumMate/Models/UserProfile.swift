@@ -2,12 +2,13 @@
 //  UserProfile.swift
 //  MuseumMate
 //
-//  Lightweight user state, persisted to UserDefaults. Each @Published
-//  field writes its key on didSet. Firestore sync arrives in Phase 7.
+//  User state persisted to UserDefaults + Firestore.
+//  REQUIRES: firebase-ios-sdk (FirebaseFirestore) SPM packages.
 //
 
 import Foundation
 import Combine
+import FirebaseFirestore
 
 @MainActor
 final class UserProfile: ObservableObject {
@@ -26,7 +27,6 @@ final class UserProfile: ObservableObject {
     @Published var joinDate: Date {
         didSet { defaults.set(joinDate.timeIntervalSince1970, forKey: Keys.joinDate) }
     }
-    /// Date of birth collected during first-time profile setup. nil until set.
     @Published var birthDate: Date? {
         didSet { defaults.set(birthDate?.timeIntervalSince1970 ?? 0, forKey: Keys.birthDate) }
     }
@@ -34,32 +34,29 @@ final class UserProfile: ObservableObject {
         didSet { defaults.set(country, forKey: Keys.country) }
     }
 
-    // TODO: Firebase uid — wire in Phase 7.
-
     private let defaults = UserDefaults.standard
+    private let db = Firestore.firestore()
 
     private enum Keys {
-        static let name = "museummate_profile_name"
-        static let email = "museummate_profile_email"
+        static let name       = "museummate_profile_name"
+        static let email      = "museummate_profile_email"
         static let onboarding = "museummate_profile_onboarding"
-        static let scanCount = "museummate_profile_scancount"
-        static let joinDate = "museummate_profile_joindate"
-        static let birthDate = "museummate_user_birthdate"
-        static let country = "museummate_user_country"
+        static let scanCount  = "museummate_profile_scancount"
+        static let joinDate   = "museummate_profile_joindate"
+        static let birthDate  = "museummate_user_birthdate"
+        static let country    = "museummate_user_country"
     }
 
     init() {
-        name = defaults.string(forKey: Keys.name) ?? ""
-        email = defaults.string(forKey: Keys.email) ?? ""
+        name     = defaults.string(forKey: Keys.name)  ?? ""
+        email    = defaults.string(forKey: Keys.email) ?? ""
         hasCompletedOnboarding = defaults.bool(forKey: Keys.onboarding)
         scanCount = defaults.integer(forKey: Keys.scanCount)
         let stored = defaults.double(forKey: Keys.joinDate)
-        joinDate = stored > 0 ? Date(timeIntervalSince1970: stored) : Date()
+        joinDate   = stored > 0 ? Date(timeIntervalSince1970: stored) : Date()
         let storedBirth = defaults.double(forKey: Keys.birthDate)
-        birthDate = storedBirth > 0 ? Date(timeIntervalSince1970: storedBirth) : nil
-        country = defaults.string(forKey: Keys.country) ?? ""
-        // All stored properties initialized — safe to use self below.
-        // Persist join date on first run.
+        birthDate  = storedBirth > 0 ? Date(timeIntervalSince1970: storedBirth) : nil
+        country    = defaults.string(forKey: Keys.country) ?? ""
         if stored == 0 { defaults.set(joinDate.timeIntervalSince1970, forKey: Keys.joinDate) }
     }
 
@@ -68,10 +65,8 @@ final class UserProfile: ObservableObject {
         return String(source.prefix(1)).uppercased()
     }
 
-    /// True once the user has completed the first-time data form (birthdate set).
     var hasProfileDetails: Bool { birthDate != nil }
 
-    /// (month, day) of the birthday, for the "born on your birthday" feature.
     var birthdayMonthDay: (month: Int, day: Int)? {
         guard let birthDate else { return nil }
         let comps = Calendar.current.dateComponents([.month, .day], from: birthDate)
@@ -79,12 +74,53 @@ final class UserProfile: ObservableObject {
         return (m, d)
     }
 
-    func reset() {
-        name = ""
-        email = ""
-        scanCount = 0
-        // hasCompletedOnboarding intentionally preserved across sign-out.
+    // MARK: - Firestore sync
+
+    func syncToFirestore(uid: String) {
+        var dict: [String: Any] = [
+            "name":      name,
+            "email":     email,
+            "scanCount": scanCount,
+            "country":   country,
+            "joinDate":  joinDate.timeIntervalSince1970
+        ]
+        if let b = birthDate { dict["birthDate"] = b.timeIntervalSince1970 }
+        db.collection("users").document(uid).setData(dict, merge: true)
     }
 
-    // TODO: Firebase — syncToFirestore() / loadFromFirestore(uid:) in Phase 7.
+    func loadFromFirestore(uid: String) {
+        db.collection("users").document(uid).getDocument { [weak self] snapshot, error in
+            guard let self, let data = snapshot?.data(), error == nil else { return }
+            Task { @MainActor in
+                if let n = data["name"]    as? String { self.name    = n }
+                if let e = data["email"]   as? String { self.email   = e }
+                if let c = data["country"] as? String { self.country = c }
+                if let j = data["joinDate"] as? Double, j > 0 {
+                    self.joinDate = Date(timeIntervalSince1970: j)
+                }
+                if let b = data["birthDate"] as? Double, b > 0 {
+                    self.birthDate = Date(timeIntervalSince1970: b)
+                }
+            }
+        }
+    }
+
+    // MARK: - Reset on sign-out
+
+    func reset() {
+        name      = ""
+        email     = ""
+        scanCount = 0
+        birthDate = nil
+        country   = ""
+        // hasCompletedOnboarding preserved across sign-out intentionally.
+    }
+
+    func clearAllLocalData() {
+        for key in [Keys.name, Keys.email, Keys.scanCount, Keys.joinDate,
+                    Keys.birthDate, Keys.country] {
+            defaults.removeObject(forKey: key)
+        }
+        reset()
+    }
 }

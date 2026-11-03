@@ -186,62 +186,202 @@ final class ArtistInfoService {
     }
 
     // MARK: - Born-on-your-birthday lookup
+    //
+    // Two-step: (1) Wikipedia On This Day API gives FACTUAL names of people
+    // born on the date; (2) we filter for visual artists; (3) DeepSeek enriches
+    // the confirmed name with movement, nationality, and a personal note.
+    // Pure DeepSeek is avoided as the primary source because it hallucinates dates.
 
-    /// Asks DeepSeek which famous painter was born on the given month/day.
-    /// Used by the Artists tab to surface a master who shares the user's birthday.
     func fetchArtistBornOn(month: Int, day: Int) async throws -> BirthdayArtist {
+        let monthName = DateFormatter().monthSymbols[safe: month - 1] ?? "\(month)"
+
+        // Step 1: Wikipedia gives us real births for this date.
+        if let confirmedName = try? await wikiArtistBornOn(month: month, day: day) {
+            // Step 2: Enrich the confirmed name via DeepSeek.
+            if let enriched = try? await enrichBirthdayArtist(
+                name: confirmedName, month: month, day: day, monthName: monthName
+            ) { return enriched }
+
+            // DeepSeek enrichment failed — return minimal data from Wikipedia.
+            return BirthdayArtist(
+                name: confirmedName,
+                nationality: "",
+                born: "\(monthName) \(day)",
+                died: "",
+                movement: "",
+                note: "Like you, \(confirmedName) was born on \(monthName) \(day)!"
+            )
+        }
+
+        // Fallback: DeepSeek with strict date constraint.
+        return try await deepSeekBirthdayArtist(
+            month: month, day: day, monthName: monthName
+        )
+    }
+
+    // MARK: Wikipedia "On This Day / Births" — factual, no hallucination
+
+    private struct WikiBirthsResponse: Decodable {
+        let births: [WikiBirth]
+    }
+    private struct WikiBirth: Decodable {
+        let text: String
+        let year: Int
+        let pages: [WikiPage]?
+    }
+    private struct WikiPage: Decodable {
+        let title: String
+        let description: String?
+    }
+
+    private func wikiArtistBornOn(month: Int, day: Int) async throws -> String? {
+        let urlStr = "https://en.wikipedia.org/api/rest_v1/feed/onthisday/births/\(month)/\(day)"
+        guard let url = URL(string: urlStr) else { return nil }
+
+        var req = URLRequest(url: url)
+        req.setValue("MuseumMate iOS/1.0 (educational)", forHTTPHeaderField: "User-Agent")
+        req.setValue("application/json", forHTTPHeaderField: "Accept")
+        req.timeoutInterval = 15
+
+        let (data, response) = try await URLSession.shared.data(for: req)
+        guard let http = response as? HTTPURLResponse,
+              (200...299).contains(http.statusCode) else { return nil }
+
+        guard let decoded = try? JSONDecoder().decode(WikiBirthsResponse.self, from: data)
+        else { return nil }
+
+        // Keywords that identify visual artists vs. politicians / athletes / etc.
+        let artistWords = ["painter", "artist", "sculptor", "illustrator",
+                           "printmaker", "engraver", "watercolor", "draughtsman",
+                           "draftsman", "miniaturist", "muralist", "photographer",
+                           "ceramicist", "glassblower", "tapestry"]
+        let excludeWords = ["politician", "president", "prime minister",
+                            "athlete", "footballer", "basketball", "tennis",
+                            "singer", "musician", "composer", "author", "poet",
+                            "actor", "actress", "director", "writer"]
+
+        for birth in decoded.births {
+            let desc = (birth.pages?.first?.description ?? "").lowercased()
+            let text = birth.text.lowercased()
+            let combined = desc + " " + text
+
+            let hasArtist = artistWords.contains { combined.contains($0) }
+            let notExcluded = !excludeWords.contains { combined.contains($0) }
+
+            if hasArtist && notExcluded {
+                // Prefer the clean Wikipedia page title over the raw text.
+                return birth.pages?.first?.title ?? extractNameFromText(birth.text)
+            }
+        }
+        return nil
+    }
+
+    // Extract "Firstname Lastname" from "1841 – Firstname Lastname, French painter..."
+    private func extractNameFromText(_ text: String) -> String {
+        var t = text
+        // Drop leading "YEAR – " prefix
+        if let dashRange = t.range(of: " \u{2013} ") {
+            t = String(t[dashRange.upperBound...])
+        } else if let dashRange = t.range(of: " - ") {
+            t = String(t[dashRange.upperBound...])
+        }
+        // Take everything before the first comma
+        if let comma = t.firstIndex(of: ",") {
+            return String(t[..<comma]).trimmingCharacters(in: .whitespaces)
+        }
+        return t.trimmingCharacters(in: .whitespaces)
+    }
+
+    // MARK: DeepSeek — enrich a CONFIRMED artist name with bio details
+
+    private func enrichBirthdayArtist(
+        name: String, month: Int, day: Int, monthName: String
+    ) async throws -> BirthdayArtist? {
+        guard AppConfig.hasValidAPIKey else { return nil }
+        guard let url = URL(string: endpoint) else { return nil }
+
+        let system = """
+        You are an art historian. Return facts about the visual artist "\(name)". \
+        Respond ONLY with valid JSON — no markdown, no extra text:
+        {
+          "name": "\(name)",
+          "nationality": "e.g. French",
+          "born": "\(monthName) \(day), YEAR",
+          "died": "year or date",
+          "movement": "primary art movement",
+          "note": "One warm sentence telling the user that \(name) was also born on \(monthName) \(day)."
+        }
+        """
+        let userMsg = "Give me facts about \(name), who was born on \(monthName) \(day)."
+
+        let body: [String: Any] = [
+            "model": model, "max_tokens": 200, "temperature": 0.3,
+            "messages": [
+                ["role": "system", "content": system],
+                ["role": "user",   "content": userMsg]
+            ]
+        ]
+
+        var req = URLRequest(url: url)
+        req.httpMethod = "POST"
+        req.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        req.setValue("Bearer \(apiKey)", forHTTPHeaderField: "Authorization")
+        req.timeoutInterval = 30
+        req.httpBody = try? JSONSerialization.data(withJSONObject: body)
+
+        let (data, response) = try await URLSession.shared.data(for: req)
+        guard let http = response as? HTTPURLResponse,
+              (200...299).contains(http.statusCode),
+              let json    = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+              let choices = json["choices"] as? [[String: Any]],
+              let message = choices.first?["message"] as? [String: Any],
+              let content = message["content"] as? String
+        else { return nil }
+
+        return try? decodeBirthday(from: content)
+    }
+
+    // MARK: Pure DeepSeek fallback (only used when Wikipedia is unreachable)
+
+    private func deepSeekBirthdayArtist(
+        month: Int, day: Int, monthName: String
+    ) async throws -> BirthdayArtist {
         guard AppConfig.hasValidAPIKey else { throw VisionError.missingAPIKey }
         guard let url = URL(string: endpoint) else { throw VisionError.invalidURL }
 
-        let monthName = DateFormatter().monthSymbols[safe: month - 1] ?? "\(month)"
         let system = """
-        You are an art historian. Name ONE famous painter or visual artist born on the \
-        given calendar date (month and day, any year). Prefer the most renowned artist. \
-        Respond ONLY with valid JSON — no markdown, no extra text:
+        You are an art historian. Name ONE famous visual artist ACTUALLY born on \
+        \(monthName) \(day) (any year). Verify the date is correct before answering. \
+        Respond ONLY with valid JSON — no markdown:
         {
           "name": "full name",
-          "nationality": "e.g. French",
-          "born": "full birth date, e.g. November 14, 1840",
-          "died": "death year or date, e.g. 1926",
-          "movement": "primary art movement",
-          "note": "One warm sentence telling the user this artist shares their birthday."
+          "nationality": "nationality",
+          "born": "\(monthName) \(day), YEAR",
+          "died": "year",
+          "movement": "art movement",
+          "note": "One warm sentence about sharing this birthday."
         }
-        Always return a real artist for the date. Never leave a field empty.
         """
-        let user = "Birthday: \(monthName) \(day). Which famous artist was born on this day?"
 
-        let messages: [[String: Any]] = [
-            ["role": "system", "content": system],
-            ["role": "user",   "content": user]
-        ]
         let body: [String: Any] = [
-            "model":       model,
-            "max_tokens":  300,
-            "temperature": 0.5,
-            "messages":    messages
+            "model": model, "max_tokens": 250, "temperature": 0.2,
+            "messages": [
+                ["role": "system", "content": system],
+                ["role": "user",   "content": "Artist born on \(monthName) \(day)?"]
+            ]
         ]
 
-        var request = URLRequest(url: url)
-        request.httpMethod = "POST"
-        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
-        request.setValue("Bearer \(apiKey)", forHTTPHeaderField: "Authorization")
-        request.timeoutInterval = 45
-        do {
-            request.httpBody = try JSONSerialization.data(withJSONObject: body)
-        } catch {
-            throw VisionError.encodingFailed
-        }
+        var req = URLRequest(url: url)
+        req.httpMethod = "POST"
+        req.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        req.setValue("Bearer \(apiKey)", forHTTPHeaderField: "Authorization")
+        req.timeoutInterval = 45
+        req.httpBody = try? JSONSerialization.data(withJSONObject: body)
 
-        let (data, response): (Data, URLResponse)
-        do {
-            (data, response) = try await URLSession.shared.data(for: request)
-        } catch {
-            throw VisionError.network(error.localizedDescription)
-        }
+        let (data, response) = try await URLSession.shared.data(for: req)
         guard let http = response as? HTTPURLResponse else { throw VisionError.invalidResponse }
         guard (200...299).contains(http.statusCode) else {
             let bodyText = String(data: data, encoding: .utf8) ?? ""
-            print("[DeepSeek] birthday HTTP \(http.statusCode): \(bodyText)")
             if http.statusCode == 429 { throw VisionError.rateLimited }
             throw VisionError.httpError(http.statusCode, bodyText)
         }
@@ -313,6 +453,14 @@ struct BirthdayArtist: Codable {
     var died: String
     var movement: String
     var note: String
+
+    // Memberwise init for Wikipedia path (no JSON decoding needed)
+    init(name: String, nationality: String, born: String,
+         died: String, movement: String, note: String) {
+        self.name = name; self.nationality = nationality
+        self.born = born; self.died = died
+        self.movement = movement; self.note = note
+    }
 
     init(from decoder: Decoder) throws {
         let c = try decoder.container(keyedBy: CodingKeys.self)
