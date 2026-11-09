@@ -13,3 +13,8 @@ GoogleService-Info.plist
 Secrets.plist
 Secrets.xcconfig
 .env
+
+# Local working notes, not part of the app
+CLAUDE.md
+DOKUMENTASI_APLIKASI.md
+tickets/

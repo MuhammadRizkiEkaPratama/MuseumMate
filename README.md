@@ -4,7 +4,7 @@
 
 Point your phone at a painting. MuseumMate identifies the artist and the art style using on-device machine learning, then uses a cloud AI pipeline to generate the artwork's details, its creation story, and a short biography of the artist. It also shows nearby museums and a daily feed of art history.
 
-Built solo as a final project during an exchange program at Nanjing Xiaozhuang University (2+2 programme with Universitas Islam Indonesia).
+Built solo as a final project at Nanjing Xiaozhuang University, during the 2+2 double degree with Universitas Islam Indonesia.
 
 ![Platform](https://img.shields.io/badge/platform-iOS%2016.4%2B-blue)
 ![Swift](https://img.shields.io/badge/Swift-SwiftUI-orange)
@@ -236,6 +236,6 @@ Both models run on-device through Core ML and Vision, so inference needs no netw
 ## Author
 
 **Muhammad Rizki Eka Pratama**
-Software Engineering, Universitas Islam Indonesia × Nanjing Xiaozhuang University
+Informatics (UII) x Software Engineering (NXU)
 
 GitHub: [@MuhammadRizkiEkaPratama](https://github.com/MuhammadRizkiEkaPratama)

@@ -86,7 +86,6 @@
 		0F2772022FDA58C400DEF486 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
 		0F2772042FDA58C800DEF486 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		0F2772072FDA58C800DEF486 /* Preview Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = "Preview Assets.xcassets"; sourceTree = "<group>"; };
-		0F27720E2FDA5ADE00DEF486 /* CLAUDE.md */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = net.daringfireball.markdown; path = CLAUDE.md; sourceTree = "<group>"; };
 		0F2772102FDA5B0000DEF486 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		0F2772112FDA5B0000DEF486 /* Color+Theme.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Color+Theme.swift"; sourceTree = "<group>"; };
 		0F2772122FDA5B0000DEF486 /* View+Extensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "View+Extensions.swift"; sourceTree = "<group>"; };
@@ -171,7 +170,6 @@
 		0F2771F42FDA58C400DEF486 = {
 			isa = PBXGroup;
 			children = (
-				0F27720E2FDA5ADE00DEF486 /* CLAUDE.md */,
 				0F2771FF2FDA58C400DEF486 /* MuseumMate */,
 				0F2771FE2FDA58C400DEF486 /* Products */,
 			);
